@@ -1,103 +1,131 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <title>Prix Crypto en Direct</title>
-  <style>
-    body { font-family: Arial, sans-serif; background: #f0f0f5; margin: 0; padding: 0; }
-    header, footer { background: #222; color: #fff; text-align: center; padding: 20px; }
-    .container { max-width: 1000px; margin: 30px auto; background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px #aaa; }
-    table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-    th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
-    th { background-color: #f5f5f5; }
-  </style>
+    <meta charset="UTF-8">
+    <title>Moniteur Crypto - Interface Web</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f5f6fa; margin: 0; padding: 0; }
+        header, footer { background: #222; color: #fff; padding: 20px; text-align: center; }
+        h1, h2 { color: #222; }
+        .container { max-width: 1200px; margin: 30px auto; background: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 2px 8px #ddd; }
+        .crypto-table, .exchange-table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+        .crypto-table th, .crypto-table td, .exchange-table th, .exchange-table td { padding: 10px; border: 1px solid #eee; text-align: center; }
+        .crypto-table th, .exchange-table th { background: #f0f0f0; }
+        .favorite { color: gold; font-weight: bold; }
+        .icon { font-size: 1.4em; }
+        .section { margin-bottom: 40px; }
+    </style>
 </head>
 <body>
-  <header>
-    <h1>💸 Prix Crypto en Direct</h1>
-    <p>Actualisation toutes les 60 secondes</p>
-  </header>
+    <header>
+        <h1>🚀 MONITEUR CRYPTO - INTERFACE WEB</h1>
+        <p>✨ Exchanges (hors Binance/Bybit) | 7 Cryptomonnaies | APIs Publiques Gratuites</p>
+    </header>
+    <div class="container">
+        <!-- Sections existantes -->
 
-  <div class="container">
-    <table>
-      <thead>
-        <tr>
-          <th>Crypto</th>
-          <th>Bitget</th>
-          <th>Kraken</th>
-          <th>KuCoin</th>
-          <th>Bitstamp</th>
-        </tr>
-      </thead>
-      <tbody id="crypto-table">
-        <tr>
-          <td>Bitcoin (BTC)</td>
-          <td id="bitget-btc">--</td>
-          <td id="kraken-btc">--</td>
-          <td id="kucoin-btc">--</td>
-          <td id="bitstamp-btc">--</td>
-        </tr>
-        <tr>
-          <td>Ethereum (ETH)</td>
-          <td id="bitget-eth">--</td>
-          <td id="kraken-eth">--</td>
-          <td id="kucoin-eth">--</td>
-          <td id="bitstamp-eth">--</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+        <section class="section">
+            <h2>Vue d'ensemble des Cryptomonnaies</h2>
+            <table class="crypto-table">
+                <thead>
+                    <tr>
+                        <th>Crypto</th><th>Prix Moy.</th><th>Bitget</th><th>Coinbase</th><th>Kraken</th><th>OKX</th>
+                        <th>KuCoin</th><th>Gate.io</th><th>Huobi (HTX)</th><th>Crypto.com</th><th>Bitstamp</th><th>MEXC</th><th>Favori</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Lignes générées dynamiquement -->
+                </tbody>
+            </table>
+        </section>
+    </div>
+    <footer>
+        <p>👋 Merci d'utiliser le Moniteur Crypto !</p>
+    </footer>
 
-  <footer>
-    <p>🔁 Données mises à jour automatiquement depuis les APIs publiques</p>
-  </footer>
+    <script>
+    const exchanges = {
+        bitget: { url: 'https://api.bitget.com/api/spot/v1/market/tickers?symbol=', parse: data => data.data },
+        coinbase: { url: 'https://api.coinbase.com/v2/exchange-rates?currency=', parse: data => data.data.rates },
+        kraken: { url: 'https://api.kraken.com/0/public/Ticker?pair=', parse: data => data.result },
+        okx: { url: 'https://www.okx.com/api/v5/market/ticker?instId=', parse: data => data.data[0] },
+        kucoin: { url: 'https://api.kucoin.com/api/v1/market/orderbook/level1?symbol=', parse: data => data.data },
+        gate: { url: 'https://api.gate.io/api/v4/spot/tickers?currency_pair=', parse: data => data[0] },
+        huobi: { url: 'https://api.huobi.pro/market/detail/merged?symbol=', parse: data => data.tick },
+        cryptocom: { url: 'https://api.crypto.com/v2/public/get-ticker?instrument_name=', parse: data => data.result.data[0] },
+        bitstamp: { url: 'https://www.bitstamp.net/api/v2/ticker/', parse: data => data },
+        mexc: { url: 'https://api.mexc.com/api/v3/ticker/price?symbol=', parse: data => data }
+    };
 
-  <script>
-    async function fetchPrices() {
-      // BITGET
-      try {
-        const res1 = await fetch('https://api.bitget.com/api/spot/v1/market/tickers?symbol=BTCUSDT,ETHUSDT');
-        const data1 = await res1.json();
-        const tickerMap = Object.fromEntries(data1.data.map(t => [t.symbol, t.last]));
-        document.getElementById('bitget-btc').innerText = "$" + parseFloat(tickerMap['BTCUSDT']).toFixed(2);
-        document.getElementById('bitget-eth').innerText = "$" + parseFloat(tickerMap['ETHUSDT']).toFixed(2);
-      } catch (e) {
-        console.error("Erreur Bitget", e);
-      }
+    const cryptos = [
+        { id: 'BTCUSDT', name: 'Bitcoin', icon: '₿' },
+        { id: 'ETHUSDT', name: 'Ethereum', icon: 'Ξ' },
+        { id: 'BNBUSDT', name: 'Binance Coin', icon: '⚡' },
+        { id: 'SOLUSDT', name: 'Solana', icon: '◎' },
+        { id: 'ADAUSDT', name: 'Cardano', icon: '₳' },
+        { id: 'XRPUSDT', name: 'XRP', icon: '✕' },
+        { id: 'DOGEUSDT', name: 'Dogecoin', icon: 'Ð' }
+    ];
 
-      // KRAKEN
-      try {
-        const res2 = await fetch('https://api.kraken.com/0/public/Ticker?pair=XBTUSD,ETHUSD');
-        const data2 = await res2.json();
-        document.getElementById('kraken-btc').innerText = "$" + parseFloat(data2.result.XXBTZUSD.c[0]).toFixed(2);
-        document.getElementById('kraken-eth').innerText = "$" + parseFloat(data2.result.XETHZUSD.c[0]).toFixed(2);
-      } catch (e) {
-        console.error("Erreur Kraken", e);
-      }
+    const tbody = document.querySelector('.crypto-table tbody');
 
-      // KUCOIN
-      try {
-        const btc = await fetch('https://api.kucoin.com/api/v1/market/orderbook/level1?symbol=BTC-USDT').then(res => res.json());
-        const eth = await fetch('https://api.kucoin.com/api/v1/market/orderbook/level1?symbol=ETH-USDT').then(res => res.json());
-        document.getElementById('kucoin-btc').innerText = "$" + parseFloat(btc.data.price).toFixed(2);
-        document.getElementById('kucoin-eth').innerText = "$" + parseFloat(eth.data.price).toFixed(2);
-      } catch (e) {
-        console.error("Erreur KuCoin", e);
-      }
-
-      // BITSTAMP
-      try {
-        const btc = await fetch('https://www.bitstamp.net/api/v2/ticker/btcusd/').then(res => res.json());
-        const eth = await fetch('https://www.bitstamp.net/api/v2/ticker/ethusd/').then(res => res.json());
-        document.getElementById('bitstamp-btc').innerText = "$" + parseFloat(btc.last).toFixed(2);
-        document.getElementById('bitstamp-eth').innerText = "$" + parseFloat(eth.last).toFixed(2);
-      } catch (e) {
-        console.error("Erreur Bitstamp", e);
-      }
+    function buildRows() {
+        tbody.innerHTML = '';
+        cryptos.forEach(c => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><span class="icon">${c.icon}</span> ${c.name}</td>
+                <td class="avg">--</td>
+                ${Object.keys(exchanges).map(e => `<td class="${e}">--</td>`).join('')}
+                <td><span class="favorite">☆</span></td>
+            `;
+            tbody.appendChild(tr);
+        });
     }
 
-    fetchPrices(); // première exécution immédiate
-    setInterval(fetchPrices, 60000); // toutes les 60 secondes
-  </script>
+    async function updatePrices() {
+        buildRows();
+        for (const crypto of cryptos) {
+            const prices = [];
+            for (const [ex, cfg] of Object.entries(exchanges)) {
+                try {
+                    const pair = crypto.id;
+                    const url = cfg.url + pair;
+                    const res = await fetch(url);
+                    const data = await res.json();
+                    let price = null;
+                    // parsing par exchange
+                    switch (ex) {
+                        case 'bitget': price = cfg.parse(data).find(t => t.symbol === pair)?.last; break;
+                        case 'coinbase': price = 1 / parseFloat(cfg.parse(data)[crypto.id.replace('USDT','')]); break;
+                        case 'kraken': {
+                            const key = Object.keys(data.result)[0];
+                            price = data.result[key].c[0];
+                        } break;
+                        case 'okx': price = cfg.parse(data).last;
+                        case 'kucoin': price = cfg.parse(data).price; break;
+                        case 'gate': price = cfg.parse(data).last;
+                        case 'huobi': price = cfg.parse(data).close;
+                        case 'cryptocom': price = cfg.parse(data).i === pair ? cfg.parse(data).a : null; break;
+                        case 'bitstamp': price = cfg.parse(data).last; break;
+                        case 'mexc': price = cfg.parse(data).price; break;
+                    }
+                    if (price) {
+                        const cell = document.querySelector(`.${ex}:nth-child(${2 + Object.keys(exchanges).indexOf(ex) + 1})`);
+                        cell.innerText = '$' + parseFloat(price).toFixed(2);
+                        prices.push(parseFloat(price));
+                    }
+                } catch (e) { console.error(ex, crypto.id, e); }
+            }
+            if (prices.length) {
+                const avg = (prices.reduce((a, b) => a + b, 0) / prices.length).toFixed(2);
+                tbody.querySelector('tr:last-child .avg').innerText = '$' + avg;
+            }
+        }
+    }
+
+    updatePrices();
+    setInterval(updatePrices, 60000);
+    </script>
 </body>
 </html>
