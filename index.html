@@ -2,37 +2,81 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Moniteur Crypto Pro</title>
+    <title>Moniteur Crypto Trading</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Google AdSense -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=pub-9671433613114123"
         crossorigin="anonymous"></script>
     <style>
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6fa; margin: 0; }
-        .container { max-width: 1100px; margin: 40px auto; background: #fff; padding: 32px 24px; border-radius: 12px; box-shadow: 0 4px 16px #0002; }
-        h1 { text-align: center; font-weight: 700; color: #2a3a4a; }
+        body {
+            background: #171d23;
+            color: #e4e8ef;
+            font-family: 'JetBrains Mono', 'Fira Mono', 'Consolas', monospace;
+            margin: 0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 36px auto;
+            background: #222831;
+            padding: 32px 18px;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px #0004;
+        }
+        h1 {
+            text-align: center;
+            font-weight: 700;
+            color: #00e676;
+            letter-spacing: 1px;
+        }
         .adsense { margin: 32px 0 16px 0; text-align: center; }
-        .crypto-table { width: 100%; border-collapse: collapse; margin: 28px 0 0 0; }
-        .crypto-table th, .crypto-table td { padding: 12px 8px; border: 1px solid #e5e8ef; text-align: center; }
-        .crypto-table th { background: #f0f4fa; color: #2a3a4a; font-weight: 600; }
-        .crypto-table tr:nth-child(even) { background: #fafbfc; }
-        .crypto-table td.na { color: #bbb; font-style: italic; }
-        .crypto-table .fav-star { color: #ffb800; font-size: 1.3em; }
+        .crypto-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 30px 0 0 0;
+            font-size: 1.06em;
+        }
+        .crypto-table th, .crypto-table td {
+            padding: 11px 6px;
+            border: 1px solid #222;
+            text-align: center;
+        }
+        .crypto-table th {
+            background: #232c36;
+            color: #8defff;
+            font-weight: 600;
+            font-size: 1em;
+        }
+        .crypto-table tr:nth-child(even) { background: #1b2229; }
+        .crypto-table tr:hover { background: #28313a; }
+        .crypto-table td.na { color: #888; font-style: italic; }
+        .crypto-table .fav-star { color: #ffe066; font-size: 1.3em; }
         .crypto-table .btn { padding: 4px 10px; border: none; border-radius: 4px; cursor: pointer; }
-        .crypto-table .btn-fav { background: #fffbe6; border: 1px solid #ffe066; color: #bfa000; }
-        .crypto-table .btn-compare { background: #e6f7fa; border: 1px solid #7fd8be; color: #1d6f6f; }
+        .crypto-table .btn-fav { background: #28240a; border: 1px solid #ffe066; color: #ffe066; }
+        .crypto-table .btn-compare { background: #0e2c2c; border: 1px solid #00e676; color: #00e676; }
+        .crypto-table .up { color: #00e676; font-weight: 600; }
+        .crypto-table .down { color: #ff5252; font-weight: 600; }
+        .crypto-table .spark { width: 80px; height: 32px; }
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 8px;
+            font-size: 0.9em;
+            background: #232c36;
+            color: #00e676;
+            margin-right: 2px;
+        }
         .favorites-block { margin-bottom: 18px; }
-        .favorites-block h2 { font-size: 1.1em; color: #1a4d2e; margin-bottom: 6px; }
+        .favorites-block h2 { font-size: 1.1em; color: #ffe066; margin-bottom: 6px; }
         .favorites-block ul { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 10px; }
-        .favorites-block li { background: #f7f9fc; border-radius: 6px; padding: 8px 14px; font-size: 1em; }
-        .compare-block { background: #f8fafd; border-radius: 10px; padding: 22px; margin: 24px 0; box-shadow: 0 2px 8px #0001; }
-        .compare-block h2 { margin-top: 0; font-size: 1.2em; color: #2a3a4a; }
+        .favorites-block li { background: #232c36; border-radius: 6px; padding: 8px 14px; font-size: 1em; }
+        .compare-block { background: #1d232a; border-radius: 10px; padding: 22px; margin: 24px 0; box-shadow: 0 2px 8px #0002; }
+        .compare-block h2 { margin-top: 0; font-size: 1.2em; color: #8defff; }
         .compare-block table { margin-top: 10px; }
         .compare-block .btn { margin-top: 16px; }
         .footer { text-align: center; margin-top: 40px; color: #888; font-size: 0.92em; }
-        .loading { color: #aaa; font-style: italic; }
+        .loading { color: #888; font-style: italic; }
         @media (max-width: 900px) {
-            .container { padding: 10px; }
+            .container { padding: 8px; }
             .crypto-table th, .crypto-table td { padding: 5px; font-size: 12px; }
         }
         @media (max-width: 600px) {
@@ -43,7 +87,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>📊 Moniteur Crypto Pro</h1>
+        <h1>📈 Moniteur Crypto Trading</h1>
         <div class="adsense">
             <ins class="adsbygoogle"
                 style="display:block"
@@ -73,12 +117,13 @@
                     <th>Crypto.com</th>
                     <th>Bitstamp</th>
                     <th>MEXC</th>
+                    <th>Graph</th>
                     <th>Favori</th>
                     <th>Comparer</th>
                 </tr>
             </thead>
             <tbody id="crypto-tbody">
-                <tr><td colspan="14" class="loading">Chargement...</td></tr>
+                <tr><td colspan="15" class="loading">Chargement...</td></tr>
             </tbody>
         </table>
 
@@ -86,9 +131,10 @@
 
         <div class="footer">
             © 2025 Moniteur Crypto Pro – Données APIs publiques, annonces Google AdSense.<br>
-            <small>Version web inspirée de ton script Python, actualisation chaque minute.</small>
+            <small>UI trading sombre, actualisation chaque minute, graphiques dynamiques.</small>
         </div>
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/sparkline-canvas@3.1.0/dist/sparkline.min.js"></script>
     <script>
     // --- Configuration ---
     const CRYPTOS = [
@@ -116,6 +162,7 @@
         {id:"bitstamp", name:"Bitstamp", logo:"🟫", url:"https://www.bitstamp.net/api/v2/ticker/{symbol_lower}usd", extract: d => d.last},
         {id:"mexc", name:"MEXC", logo:"🔷", url:"https://api.mexc.com/api/v3/ticker/price?symbol={symbol}USDT", extract: d => d.price},
     ];
+    // --- Utilitaires ---
     function symbolVars(symbol) {
         return {
             symbol,
@@ -136,12 +183,34 @@
         if (p < 100) return p.toFixed(4);
         return p.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
     }
+    function color24h(val) {
+        if (val > 0) return `<span class="up">+${val.toFixed(2)}%</span>`;
+        if (val < 0) return `<span class="down">${val.toFixed(2)}%</span>`;
+        return `<span>${val.toFixed(2)}%</span>`;
+    }
     function getFavorites() {
         try { return JSON.parse(localStorage.getItem("crypto_favs")||"[]"); } catch { return []; }
     }
     function setFavorites(favs) {
         localStorage.setItem("crypto_favs", JSON.stringify(favs));
     }
+    function average(arr) {
+        if (!arr.length) return null;
+        return arr.reduce((a,b)=>a+parseFloat(b),0)/arr.length;
+    }
+    // --- Graphiques miniatures (sparklines) ---
+    async function fetchHistory(cryptoId) {
+        try {
+            const r = await fetch(`https://api.coingecko.com/api/v3/coins/${cryptoId}/market_chart?vs_currency=usd&days=1&interval=hourly`);
+            const d = await r.json();
+            return d.prices.map(x=>x[1]);
+        } catch { return []; }
+    }
+    function drawSpark(canvas, data) {
+        if (!canvas || !data?.length) return;
+        Sparkline.draw(canvas, data, { stroke: "#00e676", fill: "#003f2d", min: Math.min(...data), max: Math.max(...data) });
+    }
+    // --- Affichage ---
     function renderTable(data) {
         const favs = getFavorites();
         let html = "";
@@ -149,12 +218,13 @@
             const row = data[c.id] || {};
             const avg = row.prices ? average(Object.values(row.prices)) : null;
             html += `<tr>
-                <td>${c.icon} ${c.name} <span style="color:#aaa">(${c.symbol})</span></td>
+                <td>${c.icon} <b>${c.name}</b> <span style="color:#888">(${c.symbol})</span></td>
                 <td><b>$${formatPrice(avg)}</b></td>`;
             for (const ex of EXCHANGES) {
                 html += `<td>${row.prices && row.prices[ex.id] ? "$"+formatPrice(row.prices[ex.id]) : "<span class='na'>N/A</span>"}</td>`;
             }
-            html += `<td>
+            html += `<td><canvas class="spark" id="spark-${c.id}"></canvas></td>
+            <td>
                 <button class="btn btn-fav" onclick="toggleFav('${c.id}')">
                     ${favs.includes(c.id) ? '<span class="fav-star">★</span>' : '☆'}
                 </button>
@@ -166,6 +236,12 @@
         }
         document.getElementById('crypto-tbody').innerHTML = html;
         renderFavorites(data);
+        // Sparklines
+        CRYPTOS.forEach(async c => {
+            const dataHist = await fetchHistory(c.id);
+            const canvas = document.getElementById(`spark-${c.id}`);
+            drawSpark(canvas, dataHist);
+        });
     }
     function renderFavorites(data) {
         const favs = getFavorites();
@@ -182,10 +258,6 @@
         }
         html += `</ul>`;
         document.getElementById('favorites-block').innerHTML = html;
-    }
-    function average(arr) {
-        if (!arr.length) return null;
-        return arr.reduce((a,b)=>a+parseFloat(b),0)/arr.length;
     }
     function showCompare(cryptoId) {
         const c = CRYPTOS.find(x => x.id === cryptoId);
@@ -267,7 +339,7 @@
         window.CRYPTO_DATA = data;
         renderTable(data);
     }
-    document.getElementById('crypto-tbody').innerHTML = `<tr><td colspan="14" class="loading">Chargement...</td></tr>`;
+    document.getElementById('crypto-tbody').innerHTML = `<tr><td colspan="15" class="loading">Chargement...</td></tr>`;
     window.CRYPTO_DATA = {};
     fetchAll();
     setInterval(fetchAll, 60000); // actualisation toutes les 60s
