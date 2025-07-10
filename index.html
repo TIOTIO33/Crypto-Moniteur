@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Moniteur Crypto</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Google AdSense -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=pub-9671433613114123"
+        crossorigin="anonymous"></script>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f9f9f9; margin: 0; padding: 0; }
+        .container { max-width: 900px; margin: 40px auto; background: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 2px 8px #0001; }
+        h1 { text-align: center; }
+        .crypto-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        .crypto-table th, .crypto-table td { padding: 10px; border: 1px solid #ddd; text-align: center; }
+        .crypto-table th { background: #f0f0f0; }
+        .adsense { margin: 30px 0; text-align: center; }
+        .footer { text-align: center; margin-top: 40px; color: #888; font-size: 0.9em; }
+        .loading { color: #aaa; font-style: italic; }
+        @media (max-width: 600px) {
+            .container { padding: 10px; }
+            .crypto-table th, .crypto-table td { padding: 5px; font-size: 12px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 Moniteur Crypto</h1>
+        <!-- AdSense Banner -->
+        <div class="adsense">
+            <ins class="adsbygoogle"
+                style="display:block"
+                data-ad-client="ca-pub-9671433613114123"
+                data-ad-slot="3338450189"
+                data-ad-format="auto"
+                data-full-width-responsive="true"></ins>
+            <script>
+                (adsbygoogle = window.adsbygoogle || []).push({});
+            </script>
+        </div>
+
+        <table class="crypto-table" id="crypto-table">
+            <thead>
+                <tr>
+                    <th>Crypto</th>
+                    <th>Prix (USD)</th>
+                    <th>Variation 24h</th>
+                    <th>Market Cap</th>
+                    <th>Volume 24h</th>
+                </tr>
+            </thead>
+            <tbody id="crypto-tbody">
+                <tr><td colspan="5" class="loading">Chargement des données...</td></tr>
+            </tbody>
+        </table>
+
+        <div class="footer">
+            © 2025 Moniteur Crypto – Données CoinGecko, annonces Google AdSense.<br>
+            <small>Site statique prêt pour GitHub Pages.</small>
+        </div>
+    </div>
+    <script>
+    // Liste des cryptos à afficher
+    const cryptos = [
+        {id: "bitcoin",      symbol: "BTC", icon: "₿"},
+        {id: "ethereum",     symbol: "ETH", icon: "Ξ"},
+        {id: "binancecoin",  symbol: "BNB", icon: "⚡"},
+        {id: "solana",       symbol: "SOL", icon: "◎"},
+        {id: "cardano",      symbol: "ADA", icon: "₳"},
+        {id: "ripple",       symbol: "XRP", icon: "✕"},
+        {id: "dogecoin",     symbol: "DOGE", icon: "Ð"}
+    ];
+    function formatPrice(p) {
+        if (p < 1) return p.toFixed(6);
+        if (p < 100) return p.toFixed(4);
+        return p.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    }
+    function formatLarge(n) {
+        if (n >= 1e12) return (n/1e12).toFixed(2) + " T";
+        if (n >= 1e9)  return (n/1e9).toFixed(2) + " B";
+        if (n >= 1e6)  return (n/1e6).toFixed(2) + " M";
+        if (n >= 1e3)  return (n/1e3).toFixed(2) + " K";
+        return n.toString();
+    }
+    function color24h(val) {
+        if (val > 0) return `<span style="color:green">+${val.toFixed(2)}%</span>`;
+        if (val < 0) return `<span style="color:red">${val.toFixed(2)}%</span>`;
+        return `<span>${val.toFixed(2)}%</span>`;
+    }
+    function updateTable(data) {
+        const tbody = document.getElementById('crypto-tbody');
+        tbody.innerHTML = '';
+        cryptos.forEach(c => {
+            const d = data[c.id];
+            if (!d) return;
+            tbody.innerHTML += `
+                <tr>
+                    <td>${c.icon} ${d.name} (${d.symbol.toUpperCase()})</td>
+                    <td><b>$${formatPrice(d.current_price)}</b></td>
+                    <td>${color24h(d.price_change_percentage_24h)}</td>
+                    <td>$${formatLarge(d.market_cap)}</td>
+                    <td>$${formatLarge(d.total_volume)}</td>
+                </tr>
+            `;
+        });
+    }
+    function fetchData() {
+        const ids = cryptos.map(c => c.id).join(',');
+        fetch(`https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${ids}`)
+            .then(r => r.json())
+            .then(arr => {
+                const data = {};
+                arr.forEach(d => data[d.id] = d);
+                updateTable(data);
+            })
+            .catch(() => {
+                document.getElementById('crypto-tbody').innerHTML = '<tr><td colspan="5">Erreur de chargement des données.</td></tr>';
+            });
+    }
+    fetchData();
+    setInterval(fetchData, 60000); // Actualise toutes les 60s
+    </script>
+</body>
+</html>
