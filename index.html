@@ -1,163 +1,103 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <title>Moniteur Crypto - Interface Web</title>
-    <style>
-        body { font-family: Arial, sans-serif; background: #f5f6fa; margin: 0; padding: 0; }
-        header, footer { background: #222; color: #fff; padding: 20px; text-align: center; }
-        h1, h2 { color: #222; }
-        .container { max-width: 1200px; margin: 30px auto; background: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 2px 8px #ddd; }
-        .crypto-table, .exchange-table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
-        .crypto-table th, .crypto-table td, .exchange-table th, .exchange-table td { padding: 10px; border: 1px solid #eee; text-align: center; }
-        .crypto-table th, .exchange-table th { background: #f0f0f0; }
-        .favorite { color: gold; font-weight: bold; }
-        .icon { font-size: 1.4em; }
-        .command-list { background: #f8f8f8; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
-        .spread-high { color: #008000; font-weight: bold; }
-        .spread-low { color: #d00; font-weight: bold; }
-        .button { padding: 6px 16px; border: none; border-radius: 5px; background: #007bff; color: #fff; cursor: pointer; }
-        .button:disabled { background: #ccc; }
-        .section { margin-bottom: 40px; }
-    </style>
+  <meta charset="UTF-8">
+  <title>Prix Crypto en Direct</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f0f0f5; margin: 0; padding: 0; }
+    header, footer { background: #222; color: #fff; text-align: center; padding: 20px; }
+    .container { max-width: 1000px; margin: 30px auto; background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px #aaa; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+    th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
+    th { background-color: #f5f5f5; }
+  </style>
 </head>
 <body>
-    <header>
-        <h1>🚀 MONITEUR CRYPTO - INTERFACE WEB</h1>
-        <p>✨ Exchanges (hors Binance/Bybit) | 7 Cryptomonnaies | APIs Publiques Gratuites</p>
-    </header>
-    <div class="container">
-        <section class="section">
-            <h2>Commandes Disponibles</h2>
-            <div class="command-list">
-                <ul>
-                    <li><b>Vue d'ensemble</b> : <code>overview</code> / <code>o</code></li>
-                    <li><b>Informations sur les exchanges</b> : <code>exchanges</code> / <code>e</code></li>
-                    <li><b>Tableau des prix</b> : <code>prices</code> / <code>p</code></li>
-                    <li><b>Comparateur</b> : <code>compare &lt;id&gt;</code></li>
-                    <li><b>Favoris</b> : <code>favorites</code> / <code>f</code></li>
-                    <li><b>Ajouter/retirer favoris</b> : <code>fav &lt;id&gt;</code></li>
-                    <li><b>Actualiser</b> : <code>refresh</code> / <code>r</code></li>
-                    <li><b>Auto-refresh</b> : <code>auto on/off</code></li>
-                    <li><b>Aide</b> : <code>help</code> / <code>h</code></li>
-                    <li><b>Quitter</b> : <code>quit</code> / <code>q</code></li>
-                </ul>
-                <p><b>IDs cryptomonnaies :</b> bitcoin, ethereum, binancecoin, solana, cardano, ripple, dogecoin</p>
-            </div>
-        </section>
+  <header>
+    <h1>💸 Prix Crypto en Direct</h1>
+    <p>Actualisation toutes les 60 secondes</p>
+  </header>
 
-        <section class="section">
-            <h2>Vue d'ensemble des Cryptomonnaies</h2>
-            <table class="crypto-table">
-                <thead>
-                    <tr>
-                        <th>Crypto</th>
-                        <th>Prix Moy.</th>
-                        <th>Bitget</th>
-                        <th>Coinbase</th>
-                        <th>Kraken</th>
-                        <th>OKX</th>
-                        <th>KuCoin</th>
-                        <th>Gate.io</th>
-                        <th>Huobi (HTX)</th>
-                        <th>Crypto.com</th>
-                        <th>Bitstamp</th>
-                        <th>MEXC</th>
-                        <th>Favori</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><span class="icon">₿</span> Bitcoin</td>
-                        <td>$--</td>
-                        <td>$--</td><td>$--</td><td>$--</td><td>$--</td><td>$--</td><td>$--</td><td>$--</td><td>$--</td><td>$--</td><td>$--</td>
-                        <td><span class="favorite">☆</span></td>
-                    </tr>
-                    <tr>
-                        <td><span class="icon">Ξ</span> Ethereum</td>
-                        <td>$--</td>
-                        <td>$--</td><td>$--</td><td>$--</td><td>$--</td><td>$--</td><td>$--</td><td>$--</td><td>$--</td><td>$--</td><td>$--</td>
-                        <td><span class="favorite">☆</span></td>
-                    </tr>
-                    <tr>
-                        <td><span class="icon">⚡</span> Binance Coin</td>
-                        <td>$--</td>
-                        <td>$--</td><td>$--</td><td>$--</td><td>$--</td><td>$--</td><td>$--</td><td>$--</td><td>$--</td><td>$--</td><td>$--</td>
-                        <td><span class="favorite">☆</span></td>
-                    </tr>
-                    <tr>
-                        <td><span class="icon">◎</span> Solana</td>
-                        <td>$--</td>
-                        <td>$--</td><td>$--</td><td>$--</td><td>$--</td><td>$--</td><td>$--</td><td>$--</td><td>$--</td><td>$--</td><td>$--</td>
-                        <td><span class="favorite">☆</span></td>
-                    </tr>
-                    <tr>
-                        <td><span class="icon">₳</span> Cardano</td>
-                        <td>$--</td>
-                        <td>$--</td><td>$--</td><td>$--</td><td>$--</td><td>$--</td><td>$--</td><td>$--</td><td>$--</td><td>$--</td><td>$--</td>
-                        <td><span class="favorite">☆</span></td>
-                    </tr>
-                    <tr>
-                        <td><span class="icon">✕</span> XRP</td>
-                        <td>$--</td>
-                        <td>$--</td><td>$--</td><td>$--</td><td>$--</td><td>$--</td><td>$--</td><td>$--</td><td>$--</td><td>$--</td><td>$--</td>
-                        <td><span class="favorite">☆</span></td>
-                    </tr>
-                    <tr>
-                        <td><span class="icon">Ð</span> Dogecoin</td>
-                        <td>$--</td>
-                        <td>$--</td><td>$--</td><td>$--</td><td>$--</td><td>$--</td><td>$--</td><td>$--</td><td>$--</td><td>$--</td><td>$--</td>
-                        <td><span class="favorite">☆</span></td>
-                    </tr>
-                </tbody>
-            </table>
-        </section>
+  <div class="container">
+    <table>
+      <thead>
+        <tr>
+          <th>Crypto</th>
+          <th>Bitget</th>
+          <th>Kraken</th>
+          <th>KuCoin</th>
+          <th>Bitstamp</th>
+        </tr>
+      </thead>
+      <tbody id="crypto-table">
+        <tr>
+          <td>Bitcoin (BTC)</td>
+          <td id="bitget-btc">--</td>
+          <td id="kraken-btc">--</td>
+          <td id="kucoin-btc">--</td>
+          <td id="bitstamp-btc">--</td>
+        </tr>
+        <tr>
+          <td>Ethereum (ETH)</td>
+          <td id="bitget-eth">--</td>
+          <td id="kraken-eth">--</td>
+          <td id="kucoin-eth">--</td>
+          <td id="bitstamp-eth">--</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 
-        <section class="section">
-            <h2>Exchanges - APIs Publiques</h2>
-            <table class="exchange-table">
-                <thead>
-                    <tr>
-                        <th>Logo</th>
-                        <th>Nom</th>
-                        <th>Volume 24h</th>
-                        <th>Score de confiance</th>
-                        <th>Paires de trading</th>
-                        <th>API publique</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr><td>🔸</td><td>Bitget</td><td>$18.5B</td><td>10/10</td><td>1,311</td><td>✅</td></tr>
-                    <tr><td>🔵</td><td>Coinbase</td><td>$14.3B</td><td>10/10</td><td>438</td><td>✅</td></tr>
-                    <tr><td>🐙</td><td>Kraken</td><td>$8.8B</td><td>10/10</td><td>600</td><td>✅</td></tr>
-                    <tr><td>⚫</td><td>OKX</td><td>$15.7B</td><td>10/10</td><td>1,037</td><td>✅</td></tr>
-                    <tr><td>🟢</td><td>KuCoin</td><td>$10.4B</td><td>9/10</td><td>1,625</td><td>✅</td></tr>
-                    <tr><td>🚪</td><td>Gate.io</td><td>$25.7B</td><td>9/10</td><td>2,850</td><td>✅</td></tr>
-                    <tr><td>🔴</td><td>Huobi (HTX)</td><td>$18.5B</td><td>9/10</td><td>946</td><td>✅</td></tr>
-                    <tr><td>💎</td><td>Crypto.com</td><td>$16.8B</td><td>9/10</td><td>400</td><td>✅</td></tr>
-                    <tr><td>🟫</td><td>Bitstamp</td><td>$5.2B</td><td>9/10</td><td>200</td><td>✅</td></tr>
-                    <tr><td>🔷</td><td>MEXC</td><td>$12.5B</td><td>8/10</td><td>1,500</td><td>✅</td></tr>
-                </tbody>
-            </table>
-        </section>
+  <footer>
+    <p>🔁 Données mises à jour automatiquement depuis les APIs publiques</p>
+  </footer>
 
-        <section class="section">
-            <h2>Favoris</h2>
-            <p>Aucun favori sélectionné. Utilisez le bouton "☆" pour ajouter une cryptomonnaie à vos favoris.</p>
-        </section>
+  <script>
+    async function fetchPrices() {
+      // BITGET
+      try {
+        const res1 = await fetch('https://api.bitget.com/api/spot/v1/market/tickers?symbol=BTCUSDT,ETHUSDT');
+        const data1 = await res1.json();
+        const tickerMap = Object.fromEntries(data1.data.map(t => [t.symbol, t.last]));
+        document.getElementById('bitget-btc').innerText = "$" + parseFloat(tickerMap['BTCUSDT']).toFixed(2);
+        document.getElementById('bitget-eth').innerText = "$" + parseFloat(tickerMap['ETHUSDT']).toFixed(2);
+      } catch (e) {
+        console.error("Erreur Bitget", e);
+      }
 
-        <section class="section">
-            <h2>Aide</h2>
-            <ul>
-                <li>Pour comparer une crypto : <code>compare bitcoin</code></li>
-                <li>Pour ajouter aux favoris : <code>fav bitcoin</code></li>
-                <li>Pour désactiver l'auto-refresh : <code>auto off</code></li>
-                <li>Pour actualiser manuellement : <code>refresh</code></li>
-            </ul>
-        </section>
-    </div>
-    <footer>
-        <p>👋 Merci d'utiliser le Moniteur Crypto !</p>
-    </footer>
+      // KRAKEN
+      try {
+        const res2 = await fetch('https://api.kraken.com/0/public/Ticker?pair=XBTUSD,ETHUSD');
+        const data2 = await res2.json();
+        document.getElementById('kraken-btc').innerText = "$" + parseFloat(data2.result.XXBTZUSD.c[0]).toFixed(2);
+        document.getElementById('kraken-eth').innerText = "$" + parseFloat(data2.result.XETHZUSD.c[0]).toFixed(2);
+      } catch (e) {
+        console.error("Erreur Kraken", e);
+      }
+
+      // KUCOIN
+      try {
+        const btc = await fetch('https://api.kucoin.com/api/v1/market/orderbook/level1?symbol=BTC-USDT').then(res => res.json());
+        const eth = await fetch('https://api.kucoin.com/api/v1/market/orderbook/level1?symbol=ETH-USDT').then(res => res.json());
+        document.getElementById('kucoin-btc').innerText = "$" + parseFloat(btc.data.price).toFixed(2);
+        document.getElementById('kucoin-eth').innerText = "$" + parseFloat(eth.data.price).toFixed(2);
+      } catch (e) {
+        console.error("Erreur KuCoin", e);
+      }
+
+      // BITSTAMP
+      try {
+        const btc = await fetch('https://www.bitstamp.net/api/v2/ticker/btcusd/').then(res => res.json());
+        const eth = await fetch('https://www.bitstamp.net/api/v2/ticker/ethusd/').then(res => res.json());
+        document.getElementById('bitstamp-btc').innerText = "$" + parseFloat(btc.last).toFixed(2);
+        document.getElementById('bitstamp-eth').innerText = "$" + parseFloat(eth.last).toFixed(2);
+      } catch (e) {
+        console.error("Erreur Bitstamp", e);
+      }
+    }
+
+    fetchPrices(); // première exécution immédiate
+    setInterval(fetchPrices, 60000); // toutes les 60 secondes
+  </script>
 </body>
 </html>
