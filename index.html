@@ -2,30 +2,35 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Moniteur Crypto</title>
+    <title>Moniteur Crypto Web</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Google AdSense -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=pub-9671433613114123"
         crossorigin="anonymous"></script>
     <style>
         body { font-family: Arial, sans-serif; background: #f9f9f9; margin: 0; padding: 0; }
-        .container { max-width: 900px; margin: 40px auto; background: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 2px 8px #0001; }
+        .container { max-width: 1000px; margin: 40px auto; background: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 2px 8px #0001; }
         h1 { text-align: center; }
-        .crypto-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        .adsense { margin: 30px 0; text-align: center; }
+        .crypto-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
         .crypto-table th, .crypto-table td { padding: 10px; border: 1px solid #ddd; text-align: center; }
         .crypto-table th { background: #f0f0f0; }
-        .adsense { margin: 30px 0; text-align: center; }
+        .btn { padding: 5px 12px; border: none; border-radius: 4px; cursor: pointer; }
+        .btn-fav { background: #ffe066; }
+        .btn-compare { background: #7fd8be; }
+        .fav-star { color: gold; font-size: 1.2em; }
         .footer { text-align: center; margin-top: 40px; color: #888; font-size: 0.9em; }
-        .loading { color: #aaa; font-style: italic; }
-        @media (max-width: 600px) {
-            .container { padding: 10px; }
-            .crypto-table th, .crypto-table td { padding: 5px; font-size: 12px; }
+        .compare-block { background: #f8f8f8; border-radius: 8px; padding: 20px; margin: 20px 0; }
+        .compare-block h2 { margin-top: 0; }
+        @media (max-width: 700px) {
+            .container { padding: 8px; }
+            .crypto-table th, .crypto-table td { padding: 4px; font-size: 12px; }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>📊 Moniteur Crypto</h1>
+        <h1>📊 Moniteur Crypto Web</h1>
         <!-- AdSense Banner -->
         <div class="adsense">
             <ins class="adsbygoogle"
@@ -39,86 +44,228 @@
             </script>
         </div>
 
+        <div id="favorites-block"></div>
+
         <table class="crypto-table" id="crypto-table">
             <thead>
                 <tr>
                     <th>Crypto</th>
-                    <th>Prix (USD)</th>
-                    <th>Variation 24h</th>
-                    <th>Market Cap</th>
-                    <th>Volume 24h</th>
+                    <th>Prix Moy.</th>
+                    <th>Bitget</th>
+                    <th>Coinbase</th>
+                    <th>Kraken</th>
+                    <th>OKX</th>
+                    <th>KuCoin</th>
+                    <th>Gate.io</th>
+                    <th>Huobi</th>
+                    <th>Crypto.com</th>
+                    <th>Bitstamp</th>
+                    <th>MEXC</th>
+                    <th>Favori</th>
+                    <th>Comparer</th>
                 </tr>
             </thead>
             <tbody id="crypto-tbody">
-                <tr><td colspan="5" class="loading">Chargement des données...</td></tr>
+                <tr><td colspan="14">Chargement...</td></tr>
             </tbody>
         </table>
 
+        <div id="compare-block"></div>
+
         <div class="footer">
-            © 2025 Moniteur Crypto – Données CoinGecko, annonces Google AdSense.<br>
-            <small>Site statique prêt pour GitHub Pages.</small>
+            © 2025 Moniteur Crypto Web – <a href="https://github.com/">Code source</a> – Données APIs publiques.<br>
+            <small>Inspiré de ton script Python, version web dynamique, prêt pour GitHub Pages.</small>
         </div>
     </div>
     <script>
-    // Liste des cryptos à afficher
-    const cryptos = [
-        {id: "bitcoin",      symbol: "BTC", icon: "₿"},
-        {id: "ethereum",     symbol: "ETH", icon: "Ξ"},
-        {id: "binancecoin",  symbol: "BNB", icon: "⚡"},
-        {id: "solana",       symbol: "SOL", icon: "◎"},
-        {id: "cardano",      symbol: "ADA", icon: "₳"},
-        {id: "ripple",       symbol: "XRP", icon: "✕"},
-        {id: "dogecoin",     symbol: "DOGE", icon: "Ð"}
+    // --- Configuration ---
+    const CRYPTOS = [
+        {id: "bitcoin", symbol: "BTC", name: "Bitcoin", icon: "₿"},
+        {id: "ethereum", symbol: "ETH", name: "Ethereum", icon: "Ξ"},
+        {id: "binancecoin", symbol: "BNB", name: "Binance Coin", icon: "⚡"},
+        {id: "solana", symbol: "SOL", name: "Solana", icon: "◎"},
+        {id: "cardano", symbol: "ADA", name: "Cardano", icon: "₳"},
+        {id: "ripple", symbol: "XRP", name: "XRP", icon: "✕"},
+        {id: "dogecoin", symbol: "DOGE", name: "Dogecoin", icon: "Ð"},
     ];
+    const EXCHANGES = [
+        {id:"bitget", name:"Bitget", logo:"🔸", url:"https://api.bitget.com/api/v2/spot/market/tickers?symbol={symbol}USDT", extract: d => d.data?.[0]?.lastPr},
+        {id:"coinbase", name:"Coinbase", logo:"🔵", url:"https://api.coinbase.com/v2/prices/{symbol}-USD/spot", extract: d => d.data?.amount},
+        {id:"kraken", name:"Kraken", logo:"🐙", url:"https://api.kraken.com/0/public/Ticker?pair={kraken_symbol}USDT", extract: d => {
+            const r = d.result; if (!r) return null;
+            for (let k in r) if (r[k]?.c?.[0]) return r[k].c[0];
+            return null;
+        }},
+        {id:"okx", name:"OKX", logo:"⚫", url:"https://www.okx.com/api/v5/market/ticker?instId={symbol}-USDT", extract: d => d.data?.[0]?.last},
+        {id:"kucoin", name:"KuCoin", logo:"🟢", url:"https://api.kucoin.com/api/v1/market/orderbook/level1?symbol={symbol}-USDT", extract: d => d.data?.price},
+        {id:"gate", name:"Gate.io", logo:"🚪", url:"https://api.gateio.ws/api/v4/spot/tickers?currency_pair={symbol}_USDT", extract: d => d?.[0]?.last},
+        {id:"huobi", name:"Huobi (HTX)", logo:"🔴", url:"https://api.huobi.pro/market/detail/merged?symbol={symbol_lower}usdt", extract: d => d.tick?.close},
+        {id:"crypto_com", name:"Crypto.com", logo:"💎", url:"https://api.crypto.com/v2/public/get-ticker?instrument_name={symbol}_USDT", extract: d => d.result?.data?.[0]?.a || d.result?.data?.[0]?.last},
+        {id:"bitstamp", name:"Bitstamp", logo:"🟫", url:"https://www.bitstamp.net/api/v2/ticker/{symbol_lower}usd", extract: d => d.last},
+        {id:"mexc", name:"MEXC", logo:"🔷", url:"https://api.mexc.com/api/v3/ticker/price?symbol={symbol}USDT", extract: d => d.price},
+    ];
+    // --- Utilitaires ---
+    function symbolVars(symbol) {
+        return {
+            symbol,
+            symbol_lower: symbol.toLowerCase(),
+            kraken_symbol: symbol === "BTC" ? "XBT" : symbol,
+        };
+    }
+    function buildUrl(exchange, symbol) {
+        let url = exchange.url;
+        const vars = symbolVars(symbol);
+        for (let k in vars) url = url.replaceAll(`{${k}}`, vars[k]);
+        return url;
+    }
     function formatPrice(p) {
+        if (!p || isNaN(p)) return "N/A";
+        p = parseFloat(p);
         if (p < 1) return p.toFixed(6);
         if (p < 100) return p.toFixed(4);
         return p.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
     }
-    function formatLarge(n) {
-        if (n >= 1e12) return (n/1e12).toFixed(2) + " T";
-        if (n >= 1e9)  return (n/1e9).toFixed(2) + " B";
-        if (n >= 1e6)  return (n/1e6).toFixed(2) + " M";
-        if (n >= 1e3)  return (n/1e3).toFixed(2) + " K";
-        return n.toString();
+    // --- Favoris (localStorage) ---
+    function getFavorites() {
+        try { return JSON.parse(localStorage.getItem("crypto_favs")||"[]"); } catch { return []; }
     }
-    function color24h(val) {
-        if (val > 0) return `<span style="color:green">+${val.toFixed(2)}%</span>`;
-        if (val < 0) return `<span style="color:red">${val.toFixed(2)}%</span>`;
-        return `<span>${val.toFixed(2)}%</span>`;
+    function setFavorites(favs) {
+        localStorage.setItem("crypto_favs", JSON.stringify(favs));
     }
-    function updateTable(data) {
-        const tbody = document.getElementById('crypto-tbody');
-        tbody.innerHTML = '';
-        cryptos.forEach(c => {
-            const d = data[c.id];
-            if (!d) return;
-            tbody.innerHTML += `
-                <tr>
-                    <td>${c.icon} ${d.name} (${d.symbol.toUpperCase()})</td>
-                    <td><b>$${formatPrice(d.current_price)}</b></td>
-                    <td>${color24h(d.price_change_percentage_24h)}</td>
-                    <td>$${formatLarge(d.market_cap)}</td>
-                    <td>$${formatLarge(d.total_volume)}</td>
-                </tr>
-            `;
-        });
+    // --- Affichage ---
+    function renderTable(data) {
+        const favs = getFavorites();
+        let html = "";
+        for (const c of CRYPTOS) {
+            const row = data[c.id] || {};
+            const avg = row.prices ? average(Object.values(row.prices)) : null;
+            html += `<tr>
+                <td>${c.icon} ${c.name} <span style="color:#aaa">(${c.symbol})</span></td>
+                <td><b>$${formatPrice(avg)}</b></td>`;
+            for (const ex of EXCHANGES) {
+                html += `<td>${row.prices && row.prices[ex.id] ? "$"+formatPrice(row.prices[ex.id]) : "<span style='color:#bbb'>N/A</span>"}</td>`;
+            }
+            html += `<td>
+                <button class="btn btn-fav" onclick="toggleFav('${c.id}')">
+                    ${favs.includes(c.id) ? '⭐' : '☆'}
+                </button>
+            </td>
+            <td>
+                <button class="btn btn-compare" onclick="showCompare('${c.id}')">🔍</button>
+            </td>
+            </tr>`;
+        }
+        document.getElementById('crypto-tbody').innerHTML = html;
+        renderFavorites(data);
     }
-    function fetchData() {
-        const ids = cryptos.map(c => c.id).join(',');
-        fetch(`https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${ids}`)
-            .then(r => r.json())
-            .then(arr => {
-                const data = {};
-                arr.forEach(d => data[d.id] = d);
-                updateTable(data);
-            })
-            .catch(() => {
-                document.getElementById('crypto-tbody').innerHTML = '<tr><td colspan="5">Erreur de chargement des données.</td></tr>';
-            });
+    function renderFavorites(data) {
+        const favs = getFavorites();
+        if (!favs.length) {
+            document.getElementById('favorites-block').innerHTML = '';
+            return;
+        }
+        let html = `<h2>⭐ Favoris</h2><ul>`;
+        for (const id of favs) {
+            const c = CRYPTOS.find(x => x.id === id);
+            if (!c) continue;
+            const avg = data[id]?.prices ? average(Object.values(data[id].prices)) : null;
+            html += `<li>${c.icon} <b>${c.name}</b> (${c.symbol}) — <b>$${formatPrice(avg)}</b></li>`;
+        }
+        html += `</ul>`;
+        document.getElementById('favorites-block').innerHTML = html;
     }
-    fetchData();
-    setInterval(fetchData, 60000); // Actualise toutes les 60s
+    function average(arr) {
+        if (!arr.length) return null;
+        return arr.reduce((a,b)=>a+parseFloat(b),0)/arr.length;
+    }
+    // --- Comparateur ---
+    function showCompare(cryptoId) {
+        const c = CRYPTOS.find(x => x.id === cryptoId);
+        if (!c) return;
+        const row = window.CRYPTO_DATA[cryptoId];
+        if (!row || !row.prices) {
+            document.getElementById('compare-block').innerHTML = `<div class="compare-block"><b>Aucune donnée pour ${c.name}</b></div>`;
+            return;
+        }
+        const prices = Object.entries(row.prices).map(([exid, price]) => {
+            const ex = EXCHANGES.find(e=>e.id===exid);
+            return {ex, price:parseFloat(price)};
+        }).filter(x=>x.price);
+        if (!prices.length) {
+            document.getElementById('compare-block').innerHTML = `<div class="compare-block"><b>Aucune donnée pour ${c.name}</b></div>`;
+            return;
+        }
+        prices.sort((a,b)=>b.price-a.price);
+        const highest = prices[0];
+        const lowest = prices[prices.length-1];
+        const avg = average(prices.map(x=>x.price));
+        const spread = highest.price - lowest.price;
+        const spreadPct = avg ? (spread/avg*100) : 0;
+        let html = `<div class="compare-block">
+            <h2>🔍 Comparateur — ${c.icon} ${c.name} (${c.symbol})</h2>
+            <b>Prix le plus haut :</b> $${formatPrice(highest.price)} (${highest.ex.name})<br>
+            <b>Prix le plus bas :</b> $${formatPrice(lowest.price)} (${lowest.ex.name})<br>
+            <b>Écart (spread) :</b> $${formatPrice(spread)} (${spreadPct.toFixed(2)}%)<br>
+            <b>Prix moyen :</b> $${formatPrice(avg)}<br>
+            <br>
+            <table class="crypto-table">
+                <tr><th>Exchange</th><th>Prix</th><th>Écart vs Moyenne</th></tr>`;
+        for (const p of prices) {
+            const dev = p.price - avg;
+            const devPct = avg ? (dev/avg*100) : 0;
+            let status = "";
+            if (p.price === highest.price) status = "🟢";
+            if (p.price === lowest.price) status = "🔴";
+            html += `<tr>
+                <td>${p.ex.logo} ${p.ex.name}</td>
+                <td>$${formatPrice(p.price)}</td>
+                <td>${dev>=0?"+":""}${devPct.toFixed(2)}% ${status}</td>
+            </tr>`;
+        }
+        html += `</table>
+            <button class="btn" onclick="closeCompare()">Fermer</button>
+        </div>`;
+        document.getElementById('compare-block').innerHTML = html;
+        window.scrollTo({top:document.getElementById('compare-block').offsetTop-20, behavior:'smooth'});
+    }
+    function closeCompare() {
+        document.getElementById('compare-block').innerHTML = "";
+    }
+    // --- Favoris JS ---
+    window.toggleFav = function(id) {
+        let favs = getFavorites();
+        if (favs.includes(id)) favs = favs.filter(x=>x!==id);
+        else favs.push(id);
+        setFavorites(favs);
+        renderTable(window.CRYPTO_DATA);
+    }
+    window.showCompare = showCompare;
+    window.closeCompare = closeCompare;
+    // --- API Fetch ---
+    async function fetchAll() {
+        const data = {};
+        for (const c of CRYPTOS) {
+            data[c.id] = {prices:{}};
+        }
+        await Promise.all(CRYPTOS.map(async c => {
+            await Promise.all(EXCHANGES.map(async ex => {
+                try {
+                    const url = buildUrl(ex, c.symbol);
+                    const r = await fetch(url, {headers: {'Accept':'application/json'}});
+                    const d = await r.json();
+                    const price = ex.extract(d);
+                    if (price && !isNaN(price)) data[c.id].prices[ex.id] = parseFloat(price);
+                } catch (e) {}
+            }));
+        }));
+        window.CRYPTO_DATA = data;
+        renderTable(data);
+    }
+    // --- Initialisation ---
+    document.getElementById('crypto-tbody').innerHTML = `<tr><td colspan="14">Chargement...</td></tr>`;
+    window.CRYPTO_DATA = {};
+    fetchAll();
+    setInterval(fetchAll, 120000); // rafraîchit toutes les 2 minutes
     </script>
 </body>
 </html>
