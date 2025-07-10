@@ -2,36 +2,48 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Moniteur Crypto Web</title>
+    <title>Moniteur Crypto Pro</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Google AdSense -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=pub-9671433613114123"
         crossorigin="anonymous"></script>
     <style>
-        body { font-family: Arial, sans-serif; background: #f9f9f9; margin: 0; padding: 0; }
-        .container { max-width: 1000px; margin: 40px auto; background: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 2px 8px #0001; }
-        h1 { text-align: center; }
-        .adsense { margin: 30px 0; text-align: center; }
-        .crypto-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-        .crypto-table th, .crypto-table td { padding: 10px; border: 1px solid #ddd; text-align: center; }
-        .crypto-table th { background: #f0f0f0; }
-        .btn { padding: 5px 12px; border: none; border-radius: 4px; cursor: pointer; }
-        .btn-fav { background: #ffe066; }
-        .btn-compare { background: #7fd8be; }
-        .fav-star { color: gold; font-size: 1.2em; }
-        .footer { text-align: center; margin-top: 40px; color: #888; font-size: 0.9em; }
-        .compare-block { background: #f8f8f8; border-radius: 8px; padding: 20px; margin: 20px 0; }
-        .compare-block h2 { margin-top: 0; }
-        @media (max-width: 700px) {
-            .container { padding: 8px; }
-            .crypto-table th, .crypto-table td { padding: 4px; font-size: 12px; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6fa; margin: 0; }
+        .container { max-width: 1100px; margin: 40px auto; background: #fff; padding: 32px 24px; border-radius: 12px; box-shadow: 0 4px 16px #0002; }
+        h1 { text-align: center; font-weight: 700; color: #2a3a4a; }
+        .adsense { margin: 32px 0 16px 0; text-align: center; }
+        .crypto-table { width: 100%; border-collapse: collapse; margin: 28px 0 0 0; }
+        .crypto-table th, .crypto-table td { padding: 12px 8px; border: 1px solid #e5e8ef; text-align: center; }
+        .crypto-table th { background: #f0f4fa; color: #2a3a4a; font-weight: 600; }
+        .crypto-table tr:nth-child(even) { background: #fafbfc; }
+        .crypto-table td.na { color: #bbb; font-style: italic; }
+        .crypto-table .fav-star { color: #ffb800; font-size: 1.3em; }
+        .crypto-table .btn { padding: 4px 10px; border: none; border-radius: 4px; cursor: pointer; }
+        .crypto-table .btn-fav { background: #fffbe6; border: 1px solid #ffe066; color: #bfa000; }
+        .crypto-table .btn-compare { background: #e6f7fa; border: 1px solid #7fd8be; color: #1d6f6f; }
+        .favorites-block { margin-bottom: 18px; }
+        .favorites-block h2 { font-size: 1.1em; color: #1a4d2e; margin-bottom: 6px; }
+        .favorites-block ul { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 10px; }
+        .favorites-block li { background: #f7f9fc; border-radius: 6px; padding: 8px 14px; font-size: 1em; }
+        .compare-block { background: #f8fafd; border-radius: 10px; padding: 22px; margin: 24px 0; box-shadow: 0 2px 8px #0001; }
+        .compare-block h2 { margin-top: 0; font-size: 1.2em; color: #2a3a4a; }
+        .compare-block table { margin-top: 10px; }
+        .compare-block .btn { margin-top: 16px; }
+        .footer { text-align: center; margin-top: 40px; color: #888; font-size: 0.92em; }
+        .loading { color: #aaa; font-style: italic; }
+        @media (max-width: 900px) {
+            .container { padding: 10px; }
+            .crypto-table th, .crypto-table td { padding: 5px; font-size: 12px; }
+        }
+        @media (max-width: 600px) {
+            .crypto-table th, .crypto-table td { font-size: 11px; }
+            .favorites-block ul { flex-direction: column; gap: 4px; }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>📊 Moniteur Crypto Web</h1>
-        <!-- AdSense Banner -->
+        <h1>📊 Moniteur Crypto Pro</h1>
         <div class="adsense">
             <ins class="adsbygoogle"
                 style="display:block"
@@ -44,7 +56,7 @@
             </script>
         </div>
 
-        <div id="favorites-block"></div>
+        <div class="favorites-block" id="favorites-block"></div>
 
         <table class="crypto-table" id="crypto-table">
             <thead>
@@ -66,15 +78,15 @@
                 </tr>
             </thead>
             <tbody id="crypto-tbody">
-                <tr><td colspan="14">Chargement...</td></tr>
+                <tr><td colspan="14" class="loading">Chargement...</td></tr>
             </tbody>
         </table>
 
         <div id="compare-block"></div>
 
         <div class="footer">
-            © 2025 Moniteur Crypto Web – <a href="https://github.com/">Code source</a> – Données APIs publiques.<br>
-            <small>Inspiré de ton script Python, version web dynamique, prêt pour GitHub Pages.</small>
+            © 2025 Moniteur Crypto Pro – Données APIs publiques, annonces Google AdSense.<br>
+            <small>Version web inspirée de ton script Python, actualisation chaque minute.</small>
         </div>
     </div>
     <script>
@@ -104,7 +116,6 @@
         {id:"bitstamp", name:"Bitstamp", logo:"🟫", url:"https://www.bitstamp.net/api/v2/ticker/{symbol_lower}usd", extract: d => d.last},
         {id:"mexc", name:"MEXC", logo:"🔷", url:"https://api.mexc.com/api/v3/ticker/price?symbol={symbol}USDT", extract: d => d.price},
     ];
-    // --- Utilitaires ---
     function symbolVars(symbol) {
         return {
             symbol,
@@ -119,20 +130,18 @@
         return url;
     }
     function formatPrice(p) {
-        if (!p || isNaN(p)) return "N/A";
+        if (!p || isNaN(p)) return "<span class='na'>N/A</span>";
         p = parseFloat(p);
         if (p < 1) return p.toFixed(6);
         if (p < 100) return p.toFixed(4);
         return p.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
     }
-    // --- Favoris (localStorage) ---
     function getFavorites() {
         try { return JSON.parse(localStorage.getItem("crypto_favs")||"[]"); } catch { return []; }
     }
     function setFavorites(favs) {
         localStorage.setItem("crypto_favs", JSON.stringify(favs));
     }
-    // --- Affichage ---
     function renderTable(data) {
         const favs = getFavorites();
         let html = "";
@@ -143,11 +152,11 @@
                 <td>${c.icon} ${c.name} <span style="color:#aaa">(${c.symbol})</span></td>
                 <td><b>$${formatPrice(avg)}</b></td>`;
             for (const ex of EXCHANGES) {
-                html += `<td>${row.prices && row.prices[ex.id] ? "$"+formatPrice(row.prices[ex.id]) : "<span style='color:#bbb'>N/A</span>"}</td>`;
+                html += `<td>${row.prices && row.prices[ex.id] ? "$"+formatPrice(row.prices[ex.id]) : "<span class='na'>N/A</span>"}</td>`;
             }
             html += `<td>
                 <button class="btn btn-fav" onclick="toggleFav('${c.id}')">
-                    ${favs.includes(c.id) ? '⭐' : '☆'}
+                    ${favs.includes(c.id) ? '<span class="fav-star">★</span>' : '☆'}
                 </button>
             </td>
             <td>
@@ -164,7 +173,7 @@
             document.getElementById('favorites-block').innerHTML = '';
             return;
         }
-        let html = `<h2>⭐ Favoris</h2><ul>`;
+        let html = `<h2>⭐ Vos favoris</h2><ul>`;
         for (const id of favs) {
             const c = CRYPTOS.find(x => x.id === id);
             if (!c) continue;
@@ -178,7 +187,6 @@
         if (!arr.length) return null;
         return arr.reduce((a,b)=>a+parseFloat(b),0)/arr.length;
     }
-    // --- Comparateur ---
     function showCompare(cryptoId) {
         const c = CRYPTOS.find(x => x.id === cryptoId);
         if (!c) return;
@@ -231,7 +239,6 @@
     function closeCompare() {
         document.getElementById('compare-block').innerHTML = "";
     }
-    // --- Favoris JS ---
     window.toggleFav = function(id) {
         let favs = getFavorites();
         if (favs.includes(id)) favs = favs.filter(x=>x!==id);
@@ -241,7 +248,6 @@
     }
     window.showCompare = showCompare;
     window.closeCompare = closeCompare;
-    // --- API Fetch ---
     async function fetchAll() {
         const data = {};
         for (const c of CRYPTOS) {
@@ -261,11 +267,10 @@
         window.CRYPTO_DATA = data;
         renderTable(data);
     }
-    // --- Initialisation ---
-    document.getElementById('crypto-tbody').innerHTML = `<tr><td colspan="14">Chargement...</td></tr>`;
+    document.getElementById('crypto-tbody').innerHTML = `<tr><td colspan="14" class="loading">Chargement...</td></tr>`;
     window.CRYPTO_DATA = {};
     fetchAll();
-    setInterval(fetchAll, 120000); // rafraîchit toutes les 2 minutes
+    setInterval(fetchAll, 60000); // actualisation toutes les 60s
     </script>
 </body>
 </html>
