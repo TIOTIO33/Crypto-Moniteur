@@ -1,131 +1,353 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <title>Moniteur Crypto - Interface Web</title>
-    <style>
-        body { font-family: Arial, sans-serif; background: #f5f6fa; margin: 0; padding: 0; }
-        header, footer { background: #222; color: #fff; padding: 20px; text-align: center; }
-        h1, h2 { color: #222; }
-        .container { max-width: 1200px; margin: 30px auto; background: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 2px 8px #ddd; }
-        .crypto-table, .exchange-table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
-        .crypto-table th, .crypto-table td, .exchange-table th, .exchange-table td { padding: 10px; border: 1px solid #eee; text-align: center; }
-        .crypto-table th, .exchange-table th { background: #f0f0f0; }
-        .favorite { color: gold; font-weight: bold; }
-        .icon { font-size: 1.4em; }
-        .section { margin-bottom: 40px; }
-    </style>
-</head>
-<body>
-    <header>
-        <h1>🚀 MONITEUR CRYPTO - INTERFACE WEB</h1>
-        <p>✨ Exchanges (hors Binance/Bybit) | 7 Cryptomonnaies | APIs Publiques Gratuites</p>
-    </header>
-    <div class="container">
-        <!-- Sections existantes -->
+mkdir crypto-dashboard && cd crypto-dashboard
 
-        <section class="section">
-            <h2>Vue d'ensemble des Cryptomonnaies</h2>
-            <table class="crypto-table">
-                <thead>
-                    <tr>
-                        <th>Crypto</th><th>Prix Moy.</th><th>Bitget</th><th>Coinbase</th><th>Kraken</th><th>OKX</th>
-                        <th>KuCoin</th><th>Gate.io</th><th>Huobi (HTX)</th><th>Crypto.com</th><th>Bitstamp</th><th>MEXC</th><th>Favori</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- Lignes générées dynamiquement -->
-                </tbody>
-            </table>
-        </section>
+# 1. Fichiers de configuration
+cat > package.json <<'EOF'
+{
+  "name": "crypto-dashboard",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "next": "^13.4.14",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "swr": "^2.2.0",
+    "tailwindcss": "^3.3.2",
+    "autoprefixer": "^10.4.14",
+    "postcss": "^8.4.21",
+    "chart.js": "^4.3.0",
+    "react-chartjs-2": "^5.2.0"
+  }
+}
+EOF
+
+cat > tsconfig.json <<'EOF'
+{
+  "compilerOptions": {
+    "target": "esnext",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "skipLibCheck": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "module": "esnext",
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve"
+  },
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
+  "exclude": ["node_modules"]
+}
+EOF
+
+echo "/// <reference types=\"next\" />" > next-env.d.ts
+
+cat > tailwind.config.js <<'EOF'
+module.exports = {
+  content: ["./pages/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}"],
+  darkMode: 'class',
+  theme: { extend: {} },
+  plugins: []
+};
+EOF
+
+cat > postcss.config.js <<'EOF'
+module.exports = {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {}
+  }
+};
+EOF
+
+cat > .env.local <<'EOF'
+COINGECKO_API_URL=https://api.coingecko.com/api/v3
+EOF
+
+mkdir -p styles && cat > styles/globals.css <<'EOF'
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100;
+}
+EOF
+
+# 2. App principale
+mkdir -p pages && cat > pages/_app.tsx <<'EOF'
+import '../styles/globals.css';
+import type { AppProps } from 'next/app';
+
+function MyApp({ Component, pageProps }: AppProps) {
+  return <Component {...pageProps} />;
+}
+
+export default MyApp;
+EOF
+
+cat > pages/index.tsx <<'EOF'
+import { useState, useEffect } from 'react';
+import type { NextPage } from 'next';
+import Navbar from '../components/Navbar';
+import PriceTable from '../components/PriceTable';
+import CryptoChart from '../components/CryptoChart';
+import { useCryptoPrices } from '../hooks/useCryptoPrices';
+import type { CoinPrice } from '../lib/types';
+
+const Home: NextPage = () => {
+  const { data: prices, error } = useCryptoPrices();
+  const [selectedCoin, setSelectedCoin] = useState('bitcoin');
+  const [selectedExchange, setSelectedExchange] = useState('binance');
+  const [chartData, setChartData] = useState<number[]>([]);
+  const [darkMode, setDarkMode] = useState(false);
+
+  const toggleDarkMode = () => setDarkMode(prev => !prev);
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', darkMode);
+  }, [darkMode]);
+
+  useEffect(() => {
+    if (!prices) return;
+    const coinData = prices.find(p => p.coin === selectedCoin);
+    if (coinData) {
+      const price = coinData[selectedExchange] as number;
+      if (price) setChartData(prev => [...prev, price].slice(-10));
+    }
+  }, [prices, selectedCoin, selectedExchange]);
+
+  if (error) return <p>Erreur de chargement.</p>;
+  if (!prices) return <p>Chargement...</p>;
+
+  const coinOptions = prices.map(p => p.coin);
+  const exchangeOptions = Object.keys(prices[0]).filter(k => k !== 'coin');
+
+  return (
+    <div className="min-h-screen flex flex-col">
+      <Navbar toggleDarkMode={toggleDarkMode} />
+      <div className="container mx-auto p-4 flex-1">
+        <h2 className="text-2xl font-semibold mb-4">Tableau de Bord Crypto</h2>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="bg-white dark:bg-gray-800 p-4 rounded shadow">
+            <h3 className="text-xl font-medium mb-2">Graphique des prix</h3>
+            <div className="flex flex-wrap gap-2 mb-4">
+              <label>
+                Crypto:
+                <select
+                  value={selectedCoin}
+                  onChange={e => setSelectedCoin(e.target.value)}
+                  className="ml-1 px-2 py-1 border rounded"
+                >
+                  {coinOptions.map(c => (
+                    <option key={c} value={c}>{c.toUpperCase()}</option>
+                  ))}
+                </select>
+              </label>
+              <label className="ml-4">
+                Exchange:
+                <select
+                  value={selectedExchange}
+                  onChange={e => setSelectedExchange(e.target.value)}
+                  className="ml-1 px-2 py-1 border rounded"
+                >
+                  {exchangeOptions.map(ex => (
+                    <option key={ex} value={ex}>{ex.toUpperCase()}</option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            <CryptoChart
+              priceData={chartData}
+              coin={selectedCoin}
+              exchange={selectedExchange}
+            />
+          </div>
+          <div className="bg-white dark:bg-gray-800 p-4 rounded shadow">
+            <h3 className="text-xl font-medium mb-2">Tableau des prix</h3>
+            <PriceTable prices={prices} />
+          </div>
+        </div>
+      </div>
     </div>
-    <footer>
-        <p>👋 Merci d'utiliser le Moniteur Crypto !</p>
-    </footer>
+  );
+};
 
-    <script>
-    const exchanges = {
-        bitget: { url: 'https://api.bitget.com/api/spot/v1/market/tickers?symbol=', parse: data => data.data },
-        coinbase: { url: 'https://api.coinbase.com/v2/exchange-rates?currency=', parse: data => data.data.rates },
-        kraken: { url: 'https://api.kraken.com/0/public/Ticker?pair=', parse: data => data.result },
-        okx: { url: 'https://www.okx.com/api/v5/market/ticker?instId=', parse: data => data.data[0] },
-        kucoin: { url: 'https://api.kucoin.com/api/v1/market/orderbook/level1?symbol=', parse: data => data.data },
-        gate: { url: 'https://api.gate.io/api/v4/spot/tickers?currency_pair=', parse: data => data[0] },
-        huobi: { url: 'https://api.huobi.pro/market/detail/merged?symbol=', parse: data => data.tick },
-        cryptocom: { url: 'https://api.crypto.com/v2/public/get-ticker?instrument_name=', parse: data => data.result.data[0] },
-        bitstamp: { url: 'https://www.bitstamp.net/api/v2/ticker/', parse: data => data },
-        mexc: { url: 'https://api.mexc.com/api/v3/ticker/price?symbol=', parse: data => data }
-    };
+export default Home;
+EOF
 
-    const cryptos = [
-        { id: 'BTCUSDT', name: 'Bitcoin', icon: '₿' },
-        { id: 'ETHUSDT', name: 'Ethereum', icon: 'Ξ' },
-        { id: 'BNBUSDT', name: 'Binance Coin', icon: '⚡' },
-        { id: 'SOLUSDT', name: 'Solana', icon: '◎' },
-        { id: 'ADAUSDT', name: 'Cardano', icon: '₳' },
-        { id: 'XRPUSDT', name: 'XRP', icon: '✕' },
-        { id: 'DOGEUSDT', name: 'Dogecoin', icon: 'Ð' }
-    ];
+# 3. API + Hooks + Lib
+mkdir -p pages/api && cat > pages/api/prices.ts <<'EOF'
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { COINS, EXCHANGES } from '../../lib/constants';
+import type { CoinPrice } from '../../lib/types';
 
-    const tbody = document.querySelector('.crypto-table tbody');
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse<CoinPrice[]>
+) {
+  const baseUrl = process.env.COINGECKO_API_URL!;
+  const result: CoinPrice[] = [];
 
-    function buildRows() {
-        tbody.innerHTML = '';
-        cryptos.forEach(c => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td><span class="icon">${c.icon}</span> ${c.name}</td>
-                <td class="avg">--</td>
-                ${Object.keys(exchanges).map(e => `<td class="${e}">--</td>`).join('')}
-                <td><span class="favorite">☆</span></td>
-            `;
-            tbody.appendChild(tr);
-        });
+  for (const coin of COINS) {
+    const entry: CoinPrice = { coin };
+    for (const ex of EXCHANGES) {
+      try {
+        const response = await fetch(
+          `${baseUrl}/coins/${coin}/tickers?exchange_ids=${ex}`
+        );
+        const data = await response.json();
+        const ticker = data?.tickers?.[0];
+        entry[ex] = ticker?.converted_last?.usd ?? null;
+      } catch {
+        entry[ex] = null;
+      }
     }
+    result.push(entry);
+  }
 
-    async function updatePrices() {
-        buildRows();
-        for (const crypto of cryptos) {
-            const prices = [];
-            for (const [ex, cfg] of Object.entries(exchanges)) {
-                try {
-                    const pair = crypto.id;
-                    const url = cfg.url + pair;
-                    const res = await fetch(url);
-                    const data = await res.json();
-                    let price = null;
-                    // parsing par exchange
-                    switch (ex) {
-                        case 'bitget': price = cfg.parse(data).find(t => t.symbol === pair)?.last; break;
-                        case 'coinbase': price = 1 / parseFloat(cfg.parse(data)[crypto.id.replace('USDT','')]); break;
-                        case 'kraken': {
-                            const key = Object.keys(data.result)[0];
-                            price = data.result[key].c[0];
-                        } break;
-                        case 'okx': price = cfg.parse(data).last;
-                        case 'kucoin': price = cfg.parse(data).price; break;
-                        case 'gate': price = cfg.parse(data).last;
-                        case 'huobi': price = cfg.parse(data).close;
-                        case 'cryptocom': price = cfg.parse(data).i === pair ? cfg.parse(data).a : null; break;
-                        case 'bitstamp': price = cfg.parse(data).last; break;
-                        case 'mexc': price = cfg.parse(data).price; break;
-                    }
-                    if (price) {
-                        const cell = document.querySelector(`.${ex}:nth-child(${2 + Object.keys(exchanges).indexOf(ex) + 1})`);
-                        cell.innerText = '$' + parseFloat(price).toFixed(2);
-                        prices.push(parseFloat(price));
-                    }
-                } catch (e) { console.error(ex, crypto.id, e); }
-            }
-            if (prices.length) {
-                const avg = (prices.reduce((a, b) => a + b, 0) / prices.length).toFixed(2);
-                tbody.querySelector('tr:last-child .avg').innerText = '$' + avg;
-            }
-        }
+  res.status(200).json(result);
+}
+EOF
+
+mkdir -p lib && cat > lib/constants.ts <<'EOF'
+export const COINS = [
+  "bitcoin","ethereum","ripple","binancecoin",
+  "solana","cardano","dogecoin","tron"
+];
+export const EXCHANGES = [
+  "binance","gdax","kraken","kucoin",
+  "okx","bitfinex","bitstamp","bybit"
+];
+EOF
+
+cat > lib/types.ts <<'EOF'
+export interface CoinPrice {
+  coin: string;
+  [exchange: string]: number | null;
+}
+EOF
+
+mkdir -p hooks && cat > hooks/useCryptoPrices.ts <<'EOF'
+import useSWR from 'swr';
+import type { CoinPrice } from '../lib/types';
+const fetcher = (url: string) => fetch(url).then(res => res.json());
+export const useCryptoPrices = () => {
+  return useSWR<CoinPrice[]>('/api/prices', fetcher, { refreshInterval: 60000 });
+};
+EOF
+
+# 4. Components
+mkdir -p components && cat > components/Navbar.tsx <<'EOF'
+'use client';
+import React from 'react';
+interface NavbarProps {
+  toggleDarkMode: () => void;
+}
+const Navbar: React.FC<NavbarProps> = ({ toggleDarkMode }) => (
+  <nav className="bg-white dark:bg-gray-800 p-4 flex justify-between items-center">
+    <h1 className="text-xl font-bold text-gray-800 dark:text-white">Crypto Dashboard</h1>
+    <button
+      className="px-3 py-1 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded"
+      onClick={toggleDarkMode}
+    >Mode Sombre</button>
+  </nav>
+);
+export default Navbar;
+EOF
+
+cat > components/PriceTable.tsx <<'EOF'
+import React from 'react';
+import type { CoinPrice } from '../lib/types';
+
+interface PriceTableProps {
+  prices: CoinPrice[];
+}
+
+const PriceTable: React.FC<PriceTableProps> = ({ prices }) => {
+  if (!prices || prices.length === 0) return <p>Aucune donnée disponible.</p>;
+
+  const exchanges = Object.keys(prices[0]).filter(k => k !== 'coin');
+
+  return (
+    <table className="min-w-full bg-white dark:bg-gray-800 shadow rounded">
+      <thead>
+        <tr className="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
+          <th className="px-4 py-2 text-left">Crypto</th>
+          {exchanges.map(ex => (
+            <th key={ex} className="px-4 py-2 text-left">{ex.toUpperCase()}</th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {prices.map((entry, idx) => (
+          <tr key={idx} className="border-b dark:border-gray-600">
+            <td className="px-4 py-2 text-gray-800 dark:text-gray-200">
+              {entry.coin.toUpperCase()}
+            </td>
+            {exchanges.map((ex, j) => (
+              <td key={j} className="px-4 py-2 text-gray-700 dark:text-gray-300">
+                {entry[ex] !== null ? entry[ex]!.toLocaleString() : 'N/A'}
+              </td>
+            ))}
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+};
+
+export default PriceTable;
+EOF
+
+cat > components/CryptoChart.tsx <<'EOF'
+'use client';
+import React from 'react';
+import {
+  Chart as ChartJS, CategoryScale, LinearScale, PointElement,
+  LineElement, Title, Tooltip, Legend
+} from 'chart.js';
+import { Line } from 'react-chartjs-2';
+
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
+
+interface CryptoChartProps {
+  priceData: number[];
+  coin: string;
+  exchange: string;
+}
+
+const CryptoChart: React.FC<CryptoChartProps> = ({ priceData, coin, exchange }) => {
+  const data = {
+    labels: priceData.map((_, idx) => idx.toString()),
+    datasets: [{
+      label: `${coin.toUpperCase()} (${exchange})`,
+      data: priceData,
+      borderColor: 'rgb(34, 197, 94)',
+      backgroundColor: 'rgba(34, 197, 94, 0.5)'
+    }]
+  };
+  const options = {
+    responsive: true,
+    scales: {
+      x: { title: { display: true, text: 'Point de données' } },
+      y: { title: { display: true, text: 'Prix (USD)' } }
     }
+  };
+  return <Line options={options} data={data} />;
+};
 
-    updatePrices();
-    setInterval(updatePrices, 60000);
-    </script>
-</body>
-</html>
+export default CryptoChart;
+EOF
+
+# 5. Git init (facultatif)
+git init
+echo "node_modules\n.env.local\n.next\nout" > .gitignore
+
+# 6. Installation
+npm install
+
+echo "✅ Projet prêt ! Lance avec : npm run dev"
