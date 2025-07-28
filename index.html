@@ -1,121 +1,87 @@
-# crypto_monitor_dash.py
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Crypto Monitor Pro</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+    }
+    h2 {
+      margin-top: 30px;
+    }
+    select {
+      width: 300px;
+      padding: 10px;
+      margin: 20px auto;
+    }
+    table {
+      width: 80%;
+      margin: 20px auto;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 10px;
+      border: 1px solid #ddd;
+    }
+    th {
+      background-color: #f3f3f3;
+    }
+    tr:nth-child(odd) {
+      background-color: #f9f9f9;
+    }
+    .stats {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
 
-import ccxt
-import dash
-from dash import dcc, html, dash_table
-from dash.dependencies import Input, Output
-import time
+  <h2>💹 Moniteur Crypto Multi-Exchanges</h2>
 
-# Liste fixe des cryptos
-CRYPTO_SYMBOLS = {
-    'BTC/USDT': 'Bitcoin (BTC)',
-    'ETH/USDT': 'Ethereum (ETH)',
-    'SOL/USDT': 'Solana (SOL)',
-    'XRP/USDT': 'Ripple (XRP)',
-    'ADA/USDT': 'Cardano (ADA)'
-}
+  <select id="crypto-selector" disabled>
+    <option selected>Bitcoin (BTC)</option>
+    <option>Ethereum (ETH)</option>
+    <option>Solana (SOL)</option>
+    <option>Ripple (XRP)</option>
+    <option>Cardano (ADA)</option>
+  </select>
 
-# Liste des exchanges (Binance exclu, Bitget inclus)
-EXCHANGES = [
-    ccxt.bitget(),
-    ccxt.kraken(),
-    ccxt.kucoin(),
-    ccxt.coinbase(),
-    ccxt.bitfinex(),
-    ccxt.bitstamp(),
-    ccxt.gate(),
-    ccxt.huobi(),
-    ccxt.okx(),
-    ccxt.bybit()
-]
+  <div class="stats">
+    <h4>🟢 Meilleur prix d'achat (Ask le + bas) : 29450.00 USD</h4>
+    <h4>🔴 Meilleur prix de vente (Bid le + haut) : 29510.00 USD</h4>
+    <h4>📊 Spread : 60.00 USD (0.2037%)</h4>
+  </div>
 
-def fetch_data(symbol):
-    data = []
-    for ex in EXCHANGES:
-        try:
-            ticker = ex.fetch_ticker(symbol)
-        except:
-            try:
-                alt_symbol = symbol.replace('USDT', 'USD')
-                ticker = ex.fetch_ticker(alt_symbol)
-            except:
-                continue
-        bid = ticker.get('bid')
-        ask = ticker.get('ask')
-        if bid and ask:
-            data.append({
-                'Exchange': ex.id,
-                'Bid (achat)': round(bid, 6),
-                'Ask (vente)': round(ask, 6)
-            })
-    return data
+  <table>
+    <thead>
+      <tr>
+        <th>Exchange</th>
+        <th>Bid (achat)</th>
+        <th>Ask (vente)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>bitget</td>
+        <td>29510.000000</td>
+        <td>29460.000000</td>
+      </tr>
+      <tr>
+        <td>kucoin</td>
+        <td>29490.000000</td>
+        <td>29455.000000</td>
+      </tr>
+      <tr>
+        <td>kraken</td>
+        <td>29475.000000</td>
+        <td>29450.000000</td>
+      </tr>
+    </tbody>
+  </table>
 
-# Initialisation Dash
-app = dash.Dash(__name__)
-app.title = "Crypto Monitor Pro"
-
-app.layout = html.Div([
-    html.H2("💹 Moniteur Crypto Multi-Exchanges", style={'textAlign': 'center'}),
-    
-    dcc.Dropdown(
-        id='crypto-selector',
-        options=[{'label': name, 'value': symbol} for symbol, name in CRYPTO_SYMBOLS.items()],
-        value='BTC/USDT',
-        style={'width': '300px', 'margin': 'auto'}
-    ),
-    
-    html.Div(id='stats-output', style={'textAlign': 'center', 'marginTop': '20px'}),
-    
-    dash_table.DataTable(
-        id='price-table',
-        columns=[
-            {'name': 'Exchange', 'id': 'Exchange'},
-            {'name': 'Bid (achat)', 'id': 'Bid (achat)', 'type': 'numeric', 'format': {'specifier': '.6f'}},
-            {'name': 'Ask (vente)', 'id': 'Ask (vente)', 'type': 'numeric', 'format': {'specifier': '.6f'}},
-        ],
-        style_table={'margin': '20px auto', 'width': '80%'},
-        style_cell={'textAlign': 'center', 'padding': '8px'},
-        style_header={'backgroundColor': '#f3f3f3', 'fontWeight': 'bold'},
-        style_data_conditional=[
-            {
-                'if': {'row_index': 'odd'},
-                'backgroundColor': '#f9f9f9'
-            }
-        ]
-    ),
-    
-    dcc.Interval(id='interval', interval=60*1000, n_intervals=0)  # mise à jour toutes les 60s
-])
-
-@app.callback(
-    Output('price-table', 'data'),
-    Output('stats-output', 'children'),
-    Input('crypto-selector', 'value'),
-    Input('interval', 'n_intervals')
-)
-def update_table(symbol, _):
-    data = fetch_data(symbol)
-    if not data:
-        return [], html.Div("Aucune donnée disponible", style={'color': 'red'})
-
-    # Tri par prix de vente (ask) décroissant
-    sorted_data = sorted(data, key=lambda x: x['Ask (vente)'], reverse=True)
-
-    bids = [row['Bid (achat)'] for row in sorted_data]
-    asks = [row['Ask (vente)'] for row in sorted_data]
-    max_bid = max(bids)
-    min_ask = min(asks)
-    spread = round(max_bid - min_ask, 6)
-    spread_pct = round((spread / min_ask) * 100, 4)
-
-    stats = html.Div([
-        html.H4(f"🟢 Meilleur prix d'achat (Ask le + bas) : {min_ask} USD"),
-        html.H4(f"🔴 Meilleur prix de vente (Bid le + haut) : {max_bid} USD"),
-        html.H4(f"📊 Spread : {spread} USD ({spread_pct}%)"),
-    ])
-    return sorted_data, stats
-
-if __name__ == '__main__':
-    app.run_server(debug=True)
+</body>
+</html>
 
 
