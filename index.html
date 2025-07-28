@@ -57,12 +57,31 @@
       { name: 'Huobi', url: 'https://api.huobi.pro/market/detail/merged?symbol=btcusdt', parse: res => parseFloat(res.tick.close) },
       { name: 'Gemini', url: 'https://api.gemini.com/v1/pubticker/btcusd', parse: res => parseFloat(res.last) },
       { name: 'Bitrue', url: 'https://www.bitrue.com/api/v1/ticker/price?symbol=BTCUSDT', parse: res => parseFloat(res.price) },
-      { name: 'Binance US', url: 'https://api.binance.us/api/v3/ticker/price?symbol=BTCUSD', parse: res => parseFloat(res.price) },
-      { name: 'Exmo', url: 'https://api.exmo.com/v1/ticker/', parse: res => parseFloat(res.BTC_USD.last_trade) },
-      // Ajout Crypto.com
-      { name: 'Crypto.com', url: 'https://api.crypto.com/v2/public/get-ticker?instrument_name=BTC_USDT', parse: res => parseFloat(res.result.data.a) },
-      // Ajout Bitget
-      { name: 'Bitget', url: 'https://api.bitget.com/api/spot/v1/market/ticker?symbol=BTCUSDT', parse: res => parseFloat(res.data.last) }
+      // Crypto.com corrigé
+      { 
+        name: 'Crypto.com', 
+        url: 'https://api.crypto.com/v2/public/get-ticker?instrument_name=BTC_USDT', 
+        parse: res => {
+          // vérifier la présence des données avant d'accéder
+          if (res && res.result && res.result.data && res.result.data.a) {
+            return parseFloat(res.result.data.a);
+          }
+          throw new Error('Données Crypto.com non disponibles');
+        }
+      },
+      // Bitget corrigé
+      { 
+        name: 'Bitget', 
+        url: 'https://api.bitget.com/api/spot/v1/market/ticker?symbol=BTCUSDT', 
+        parse: res => {
+          if (res && res.data && res.data.length > 0 && res.data[0].last) {
+            return parseFloat(res.data[0].last);
+          } else if (res && res.data && res.data.last) {
+            return parseFloat(res.data.last);
+          }
+          throw new Error('Données Bitget non disponibles');
+        }
+      }
     ];
 
     async function updatePrices() {
