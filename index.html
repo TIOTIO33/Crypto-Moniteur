@@ -37,7 +37,7 @@
       margin: auto;
     }
 
-    h1 {
+    h1, h2 {
       text-align: center;
       font-size: 2rem;
       margin-bottom: 10px;
@@ -81,12 +81,12 @@
       margin: 10px;
     }
 
-    .high {
-      color: #00c853; /* vert */
+    .high, #high .high {
+      color: #00c853;
     }
 
-    .low {
-      color: #d50000; /* rouge */
+    .low, #low .low {
+      color: #d50000;
     }
 
     table {
@@ -142,46 +142,36 @@
       color: #111;
     }
 
-    /* Section news */
     #news-section {
-      max-width: 1200px;
-      margin: 40px auto;
       background: var(--table-bg);
       padding: 20px;
       border-radius: 10px;
       box-shadow: 0 0 20px rgba(0,0,0,0.1);
-    }
-
-    #news-section h2 {
-      text-align: center;
-      margin-bottom: 20px;
+      margin-top: 40px;
     }
 
     #news-list {
       list-style: none;
-      padding-left: 0;
-      max-height: 300px;
-      overflow-y: auto;
+      padding: 0;
     }
 
     #news-list li {
       margin-bottom: 15px;
-      font-size: 1rem;
     }
 
-    #news-list li a {
-      color: var(--text-color);
+    #news-list a {
+      font-weight: bold;
+      color: inherit;
       text-decoration: none;
-      font-weight: 600;
     }
 
-    #news-list li a:hover {
+    #news-list a:hover {
       text-decoration: underline;
     }
 
     #news-list small {
-      color: #666;
-      font-weight: 400;
+      display: block;
+      color: #888;
     }
   </style>
 </head>
@@ -203,8 +193,8 @@
 
     <div class="info-panel">
       <div id="spread">Spread : ...</div>
-      <div id="high"><span class="high">Plus haut</span> : ...</div>
-      <div id="low"><span class="low">Plus bas</span> : ...</div>
+      <div id="high">Plus haut : ...</div>
+      <div id="low">Plus bas : ...</div>
     </div>
 
     <table>
@@ -216,13 +206,13 @@
       </thead>
       <tbody id="price-table"></tbody>
     </table>
-  </div>
 
-  <div id="news-section">
-    <h2>Dernières actualités Crypto</h2>
-    <ul id="news-list">
-      <li>Chargement des actualités...</li>
-    </ul>
+    <div id="news-section">
+      <h2>Dernières actualités Crypto</h2>
+      <ul id="news-list">
+        <li>Chargement des actualités...</li>
+      </ul>
+    </div>
   </div>
 
   <script>
@@ -264,10 +254,8 @@
       const validPrices = priceEntries.filter(p => !p.error);
       const values = validPrices.map(p => p.price);
 
-      // Tri du plus haut au plus bas
       validPrices.sort((a, b) => b.price - a.price);
 
-      // Affichage
       for (const entry of validPrices) {
         const row = document.createElement('tr');
         row.innerHTML = `<td>${entry.name}</td><td class="green">${entry.price.toFixed(2)}</td>`;
@@ -286,13 +274,13 @@
         const spread = max - min;
         const spreadPercent = (spread / min) * 100;
 
-        document.getElementById('high').innerHTML = `<span class="high">Plus haut</span> : ${max.toFixed(2)} USDT`;
-        document.getElementById('low').innerHTML = `<span class="low">Plus bas</span> : ${min.toFixed(2)} USDT`;
         document.getElementById('spread').textContent = `Spread : ${spread.toFixed(2)} USDT (${spreadPercent.toFixed(2)}%)`;
+        document.getElementById('high').innerHTML = `Plus haut : <span class="high">${max.toFixed(2)} USDT</span>`;
+        document.getElementById('low').innerHTML = `Plus bas : <span class="low">${min.toFixed(2)} USDT</span>`;
       } else {
         document.getElementById('spread').textContent = 'Pas assez de données pour calculer le spread.';
-        document.getElementById('high').innerHTML = `<span class="high">Plus haut</span> : ...`;
-        document.getElementById('low').innerHTML = `<span class="low">Plus bas</span> : ...`;
+        document.getElementById('high').textContent = 'Plus haut : ...';
+        document.getElementById('low').textContent = 'Plus bas : ...';
       }
 
       document.getElementById('last-update').textContent = `Dernière mise à jour : ${new Date().toLocaleTimeString()}`;
@@ -303,7 +291,8 @@
       const url = `https://newsapi.org/v2/everything?q=cryptocurrency&language=fr&sortBy=publishedAt&pageSize=5&apiKey=${apiKey}`;
 
       try {
-        const res = await fetch(url);
+        const proxyUrl = "https://corsproxy.io/?" + encodeURIComponent(url);
+        const res = await fetch(proxyUrl);
         const data = await res.json();
 
         if (data.status !== "ok") throw new Error("Erreur API news");
@@ -313,7 +302,8 @@
 
         data.articles.forEach(article => {
           const li = document.createElement("li");
-          li.innerHTML = `<a href="${article.url}" target="_blank" rel="noopener noreferrer">${article.title}</a><br><small>${new Date(article.publishedAt).toLocaleString()} - ${article.source.name}</small>`;
+          li.innerHTML = `<a href="${article.url}" target="_blank" rel="noopener noreferrer">${article.title}</a>
+                          <br><small>${new Date(article.publishedAt).toLocaleString()} - ${article.source.name}</small>`;
           newsList.appendChild(li);
         });
       } catch (e) {
@@ -337,8 +327,10 @@
     updateChart(symbolSelect.value);
     updatePrices();
     fetchNews();
-    setInterval(updatePrices, 60000);
-    setInterval(fetchNews, 600000); // rafraîchir news toutes les 10 min
+    setInterval(() => {
+      updatePrices();
+      fetchNews();
+    }, 60000);
   </script>
 </body>
 </html>
