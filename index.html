@@ -53,7 +53,6 @@
       { name: 'Coinbase', url: 'https://api.coinbase.com/v2/prices/BTC-USD/spot', parse: res => parseFloat(res.data.amount) },
       { name: 'Kraken', url: 'https://api.kraken.com/0/public/Ticker?pair=XXBTZUSD', parse: res => parseFloat(res.result.XXBTZUSD.c[0]) },
       { name: 'OKX', url: 'https://www.okx.com/api/v5/market/ticker?instId=BTC-USDT', parse: res => parseFloat(res.data[0].last) },
-      { name: 'Bitstamp', url: 'https://www.bitstamp.net/api/v2/ticker/btcusd/', parse: res => parseFloat(res.last) },
       { name: 'Huobi', url: 'https://api.huobi.pro/market/detail/merged?symbol=btcusdt', parse: res => parseFloat(res.tick.close) },
       { name: 'Gemini', url: 'https://api.gemini.com/v1/pubticker/btcusd', parse: res => parseFloat(res.last) },
       { name: 'Bitrue', url: 'https://www.bitrue.com/api/v1/ticker/price?symbol=BTCUSDT', parse: res => parseFloat(res.price) }
