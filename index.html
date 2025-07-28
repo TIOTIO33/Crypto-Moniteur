@@ -1,7 +1,14 @@
-import ccxt
-import time
+# 👇 Installation automatique si ccxt n'est pas présent
+try:
+    import ccxt
+except ImportError:
+    !pip install ccxt
+    import ccxt
 
-# Liste fixe des 5 cryptos
+import time
+from IPython.display import clear_output
+
+# Liste fixe des cryptos
 crypto_options = {
     '1': 'BTC/USDT',
     '2': 'ETH/USDT',
@@ -10,76 +17,76 @@ crypto_options = {
     '5': 'ADA/USDT'
 }
 
-# Afficher le menu de sélection
-print("Sélectionne la cryptomonnaie à surveiller :")
+# Menu de sélection
+print("📌 Sélectionne une cryptomonnaie à surveiller :")
 for k, v in crypto_options.items():
     print(f"{k}. {v}")
-
-choice = input("Entrez le numéro correspondant : ").strip()
+choice = input("➡️ Entrez le numéro : ").strip()
 selected_symbol = crypto_options.get(choice)
 
 if not selected_symbol:
-    print("Choix invalide. Fermeture.")
-    exit()
+    print("❌ Choix invalide. Arrêt.")
+else:
+    print(f"\n🔍 Crypto sélectionnée : {selected_symbol}")
 
-print(f"\n🔍 Crypto sélectionnée : {selected_symbol}")
+    # 10 Exchanges CCXT (Binance exclu, Bitget inclus)
+    exchanges = [
+        ccxt.bitget(),
+        ccxt.kraken(),
+        ccxt.kucoin(),
+        ccxt.coinbase(),
+        ccxt.bitfinex(),
+        ccxt.bitstamp(),
+        ccxt.gate(),
+        ccxt.huobi(),
+        ccxt.okx(),
+        ccxt.bybit()
+    ]
 
-# Liste des 10 exchanges (sans Binance, avec Bitget)
-exchanges = [
-    ccxt.bitget(),
-    ccxt.kraken(),
-    ccxt.kucoin(),
-    ccxt.coinbase(),
-    ccxt.bitfinex(),
-    ccxt.bitstamp(),
-    ccxt.gate(),
-    ccxt.huobi(),
-    ccxt.okx(),
-    ccxt.bybit()
-]
-
-def fetch_prices(symbol):
-    results = []
-    for ex in exchanges:
-        try:
-            ticker = ex.fetch_ticker(symbol)
-        except Exception:
-            # Retenter avec USD si USDT échoue
+    def fetch_prices(symbol):
+        results = []
+        for ex in exchanges:
             try:
-                alt_symbol = symbol.replace('USDT', 'USD')
-                ticker = ex.fetch_ticker(alt_symbol)
-            except:
-                continue
+                ticker = ex.fetch_ticker(symbol)
+            except Exception:
+                try:
+                    alt_symbol = symbol.replace('USDT', 'USD')
+                    ticker = ex.fetch_ticker(alt_symbol)
+                except:
+                    continue
+            bid = ticker.get('bid')
+            ask = ticker.get('ask')
+            if bid and ask:
+                results.append((ex.id, bid, ask))
+        return results
 
-        bid = ticker.get('bid')
-        ask = ticker.get('ask')
-        if bid and ask:
-            results.append((ex.id, bid, ask))
-    return results
+    # Rafraîchissement continu
+    while True:
+        clear_output(wait=True)
+        print(f"📈 Crypto : {selected_symbol} - Mise à jour toutes les 60s\n")
 
-# Boucle de rafraîchissement
-while True:
-    print(f"\n===== MISE À JOUR ({selected_symbol}) =====")
-    data = fetch_prices(selected_symbol)
-    
-    if not data:
-        print("Aucune donnée récupérée.")
-    else:
-        # Trier par prix de vente (ask) décroissant
-        data.sort(key=lambda x: x[2], reverse=True)
+        data = fetch_prices(selected_symbol)
+        if not data:
+            print("⚠️ Aucune donnée récupérée.")
+        else:
+            # Trier par prix de vente (ask) décroissant
+            data.sort(key=lambda x: x[2], reverse=True)
+            min_ask = min([x[2] for x in data])
+            max_bid = max([x[1] for x in data])
+            spread = max_bid - min_ask
+            spread_pct = (spread / min_ask) * 100
 
-        # Meilleur prix d'achat (ask le plus bas) et vente (bid le plus haut)
-        min_ask = min([x[2] for x in data])
-        max_bid = max([x[1] for x in data])
+            print(f"💰 Meilleur PRIX D'ACHAT (ask min) : {min_ask:.6f} USD")
+            print(f"💸 Meilleur PRIX DE VENTE (bid max): {max_bid:.6f} USD")
+            print(f"📊 Spread (prix) : {spread:.6f} USD")
+            print(f"📈 Spread (%)   : {spread_pct:.4f} %\n")
 
-        print(f"💰 Meilleur PRIX D'ACHAT (ask le + bas) : {min_ask}")
-        print(f"💸 Meilleur PRIX DE VENTE (bid le + haut) : {max_bid}")
+            print(f"{'Exchange':<12} {'Bid (achat)':>15} {'Ask (vente)':>15}")
+            print("-" * 45)
+            for ex_id, bid, ask in data:
+                print(f"{ex_id:<12} {bid:>15.6f} {ask:>15.6f}")
 
-        print(f"\n{'Exchange':<12} {'Bid (achat)':>15} {'Ask (vente)':>15}")
-        print("-" * 45)
-        for ex_id, bid, ask in data:
-            print(f"{ex_id:<12} {bid:>15.6f} {ask:>15.6f}")
+        print("\n⏳ Attente 60 secondes avant la prochaine mise à jour...")
+        time.sleep(60)
 
-    print("\n⏳ Prochaine mise à jour dans 60 secondes...")
-    time.sleep(60)
 
