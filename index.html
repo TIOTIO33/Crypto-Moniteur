@@ -1,91 +1,63 @@
 <!DOCTYPE html>
 <html lang="fr">
-<head>
-  <meta charset="UTF-8">
-  <title>Suivi des prix BTC</title>
+<head><meta charset="UTF-8"><title>BTC live</title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; }
-    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
-    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-    th { background-color: #f2f2f2; }
-    #last-update { margin-top: 10px; font-size: 14px; color: #666; }
+    body{font-family:sans-serif;padding:20px;}
+    table{border:1px solid #ccc;border-collapse:collapse;width:300px;}
+    th,td{border:1px solid #ccc;padding:8px;text-align:right;}
   </style>
 </head>
 <body>
-  <h1>Prix du Bitcoin (BTC) sur 10 exchanges</h1>
-  <table id="prices-table">
-    <thead>
-      <tr>
-        <th>Exchange</th>
-        <th>Prix (USD)</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
+  <h1>Prix BTC/USD en temps réel</h1>
+  <table>
+    <thead><tr><th>Exchange</th><th>Prix (USD)</th></tr></thead>
+    <tbody>
+      <tr><td>Binance</td><td id="price-binance">…</td></tr>
+      <tr><td>KuCoin</td><td id="price-kucoin">…</td></tr>
+    </tbody>
   </table>
+  <p id="spread">Spread : …</p>
 
-  <p id="summary"></p>
-  <p id="last-update">Dernière mise à jour : ...</p>
+<script>
+let priceBin = null, priceKu = null;
 
-  <script>
-    const exchanges = [
-      { name: "Binance", url: "https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT", path: "price" },
-      { name: "Coinbase", url: "https://api.exchange.coinbase.com/products/BTC-USD/ticker", path: "price" },
-      { name: "Kraken", url: "https://api.kraken.com/0/public/Ticker?pair=XXBTZUSD", path: "result.XXBTZUSD.c[0]" },
-      { name: "KuCoin", url: "https://api.kucoin.com/api/v1/market/orderbook/level1?symbol=BTC-USDT", path: "data.price" },
-      { name: "Bitfinex", url: "https://api.bitfinex.com/v1/pubticker/btcusd", path: "last_price" },
-      { name: "Bitstamp", url: "https://www.bitstamp.net/api/v2/ticker/btcusd/", path: "last" },
-      { name: "Huobi", url: "https://api.huobi.pro/market/detail/merged?symbol=btcusdt", path: "tick.close" },
-      { name: "OKX", url: "https://www.okx.com/api/v5/market/ticker?instId=BTC-USDT", path: "data[0].last" },
-      { name: "Gate.io", url: "https://api.gateio.ws/api/v4/spot/tickers?currency_pair=BTC_USDT", path: "0.last" },
-      { name: "Crypto.com", url: "https://api.crypto.com/exchange/v1/public/get-ticker?instrument_name=BTC_USDT", path: "result.data.a" }
-    ];
+const wsBin = new WebSocket("wss://stream.binance.com:9443/ws/btcusdt@ticker");
+wsBin.onmessage = evt => {
+  const d = JSON.parse(evt.data);
+  priceBin = parseFloat(d.c); // dernier prix
+  document.getElementById("price-binance").textContent = priceBin.toFixed(2);
+  updateSpread();
+};
 
-    function getValueFromPath(obj, path) {
-      return path.split('.').reduce((o, i) => (Array.isArray(o) ? o[parseInt(i)] : o?.[i]), obj);
-    }
+const wsKu = new WebSocket("wss://push1-v2.kucoin.com/endpoint"); // endpoint KuCoin
+wsKu.onopen = () => {
+  const sub = {
+    id: Date.now(),
+    type: "subscribe",
+    topic: "/market/ticker:BTC-USDT",
+    privateChannel: false,
+    response: true
+  };
+  wsKu.send(JSON.stringify(sub));
+};
+wsKu.onmessage = evt => {
+  const d = JSON.parse(evt.data);
+  if (d.topic && d.data) {
+    priceKu = parseFloat(d.data.price);
+    document.getElementById("price-kucoin").textContent = priceKu.toFixed(2);
+    updateSpread();
+  }
+};
 
-    async function fetchPrice(exchange) {
-      try {
-        const res = await fetch(exchange.url);
-        const json = await res.json();
-        const value = getValueFromPath(json, exchange.path);
-        return { name: exchange.name, price: parseFloat(value) };
-      } catch (e) {
-        return { name: exchange.name, price: null };
-      }
-    }
-
-    async function updatePrices() {
-      const pricesTable = document.querySelector("#prices-table tbody");
-      pricesTable.innerHTML = "";
-
-      const results = await Promise.all(exchanges.map(fetchPrice));
-      const validPrices = results.filter(r => r.price);
-      const max = Math.max(...validPrices.map(r => r.price));
-      const min = Math.min(...validPrices.map(r => r.price));
-      const spread = (max - min).toFixed(2);
-      const spreadPercent = ((spread / min) * 100).toFixed(2);
-
-      for (const { name, price } of results) {
-        const row = document.createElement("tr");
-        row.innerHTML = `<td>${name}</td><td>${price ? price.toFixed(2) : "Erreur"}</td>`;
-        pricesTable.appendChild(row);
-      }
-
-      const maxEx = validPrices.find(r => r.price === max)?.name;
-      const minEx = validPrices.find(r => r.price === min)?.name;
-
-      document.getElementById("summary").innerHTML = `
-        Prix le plus haut : <strong>${max.toFixed(2)} USD (${maxEx})</strong><br>
-        Prix le plus bas : <strong>${min.toFixed(2)} USD (${minEx})</strong><br>
-        Écart (spread) : <strong>${spread} USD</strong> (${spreadPercent}%)
-      `;
-
-      document.getElementById("last-update").textContent = `Dernière mise à jour : ${new Date().toLocaleTimeString()}`;
-    }
-
-    updatePrices();
-    setInterval(updatePrices, 60000); // toutes les 60 secondes
-  </script>
+function updateSpread(){
+  if (priceBin && priceKu) {
+    const max = Math.max(priceBin, priceKu), min = Math.min(priceBin, priceKu);
+    const spread = (max - min).toFixed(2),
+          pct = ((max-min)/min *100).toFixed(2);
+    document.getElementById("spread").textContent =
+      `Spread : ${spread} USD (${pct} %)`;
+  }
+}
+</script>
 </body>
 </html>
