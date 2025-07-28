@@ -1,10 +1,9 @@
-!pip install ccxt dash
+# crypto_monitor_dash.py
 
 import ccxt
 import dash
 from dash import dcc, html, dash_table
 from dash.dependencies import Input, Output
-import pandas as pd
 import time
 
 # Liste fixe des cryptos
@@ -16,7 +15,7 @@ CRYPTO_SYMBOLS = {
     'ADA/USDT': 'Cardano (ADA)'
 }
 
-# Liste des 10 exchanges (Binance exclu, Bitget inclus)
+# Liste des exchanges (Binance exclu, Bitget inclus)
 EXCHANGES = [
     ccxt.bitget(),
     ccxt.kraken(),
@@ -57,13 +56,16 @@ app.title = "Crypto Monitor Pro"
 
 app.layout = html.Div([
     html.H2("💹 Moniteur Crypto Multi-Exchanges", style={'textAlign': 'center'}),
+    
     dcc.Dropdown(
         id='crypto-selector',
         options=[{'label': name, 'value': symbol} for symbol, name in CRYPTO_SYMBOLS.items()],
         value='BTC/USDT',
         style={'width': '300px', 'margin': 'auto'}
     ),
+    
     html.Div(id='stats-output', style={'textAlign': 'center', 'marginTop': '20px'}),
+    
     dash_table.DataTable(
         id='price-table',
         columns=[
@@ -81,7 +83,8 @@ app.layout = html.Div([
             }
         ]
     ),
-    dcc.Interval(id='interval', interval=60*1000, n_intervals=0)  # 60s
+    
+    dcc.Interval(id='interval', interval=60*1000, n_intervals=0)  # mise à jour toutes les 60s
 ])
 
 @app.callback(
@@ -95,7 +98,7 @@ def update_table(symbol, _):
     if not data:
         return [], html.Div("Aucune donnée disponible", style={'color': 'red'})
 
-    # Tri par prix ask décroissant
+    # Tri par prix de vente (ask) décroissant
     sorted_data = sorted(data, key=lambda x: x['Ask (vente)'], reverse=True)
 
     bids = [row['Bid (achat)'] for row in sorted_data]
