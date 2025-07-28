@@ -1,92 +1,116 @@
-# 👇 Installation automatique si ccxt n'est pas présent
-try:
-    import ccxt
-except ImportError:
-    !pip install ccxt
-    import ccxt
-
+import ccxt
+import dash
+from dash import dcc, html, dash_table
+from dash.dependencies import Input, Output
+import pandas as pd
 import time
-from IPython.display import clear_output
 
 # Liste fixe des cryptos
-crypto_options = {
-    '1': 'BTC/USDT',
-    '2': 'ETH/USDT',
-    '3': 'SOL/USDT',
-    '4': 'XRP/USDT',
-    '5': 'ADA/USDT'
+CRYPTO_SYMBOLS = {
+    'BTC/USDT': 'Bitcoin (BTC)',
+    'ETH/USDT': 'Ethereum (ETH)',
+    'SOL/USDT': 'Solana (SOL)',
+    'XRP/USDT': 'Ripple (XRP)',
+    'ADA/USDT': 'Cardano (ADA)'
 }
 
-# Menu de sélection
-print("📌 Sélectionne une cryptomonnaie à surveiller :")
-for k, v in crypto_options.items():
-    print(f"{k}. {v}")
-choice = input("➡️ Entrez le numéro : ").strip()
-selected_symbol = crypto_options.get(choice)
+# Liste des 10 exchanges (Binance exclu, Bitget inclus)
+EXCHANGES = [
+    ccxt.bitget(),
+    ccxt.kraken(),
+    ccxt.kucoin(),
+    ccxt.coinbase(),
+    ccxt.bitfinex(),
+    ccxt.bitstamp(),
+    ccxt.gate(),
+    ccxt.huobi(),
+    ccxt.okx(),
+    ccxt.bybit()
+]
 
-if not selected_symbol:
-    print("❌ Choix invalide. Arrêt.")
-else:
-    print(f"\n🔍 Crypto sélectionnée : {selected_symbol}")
-
-    # 10 Exchanges CCXT (Binance exclu, Bitget inclus)
-    exchanges = [
-        ccxt.bitget(),
-        ccxt.kraken(),
-        ccxt.kucoin(),
-        ccxt.coinbase(),
-        ccxt.bitfinex(),
-        ccxt.bitstamp(),
-        ccxt.gate(),
-        ccxt.huobi(),
-        ccxt.okx(),
-        ccxt.bybit()
-    ]
-
-    def fetch_prices(symbol):
-        results = []
-        for ex in exchanges:
+def fetch_data(symbol):
+    data = []
+    for ex in EXCHANGES:
+        try:
+            ticker = ex.fetch_ticker(symbol)
+        except:
             try:
-                ticker = ex.fetch_ticker(symbol)
-            except Exception:
-                try:
-                    alt_symbol = symbol.replace('USDT', 'USD')
-                    ticker = ex.fetch_ticker(alt_symbol)
-                except:
-                    continue
-            bid = ticker.get('bid')
-            ask = ticker.get('ask')
-            if bid and ask:
-                results.append((ex.id, bid, ask))
-        return results
+                alt_symbol = symbol.replace('USDT', 'USD')
+                ticker = ex.fetch_ticker(alt_symbol)
+            except:
+                continue
+        bid = ticker.get('bid')
+        ask = ticker.get('ask')
+        if bid and ask:
+            data.append({
+                'Exchange': ex.id,
+                'Bid (achat)': round(bid, 6),
+                'Ask (vente)': round(ask, 6)
+            })
+    return data
 
-    # Rafraîchissement continu
-    while True:
-        clear_output(wait=True)
-        print(f"📈 Crypto : {selected_symbol} - Mise à jour toutes les 60s\n")
+# Initialisation Dash
+app = dash.Dash(__name__)
+app.title = "Crypto Monitor Pro"
 
-        data = fetch_prices(selected_symbol)
-        if not data:
-            print("⚠️ Aucune donnée récupérée.")
-        else:
-            # Trier par prix de vente (ask) décroissant
-            data.sort(key=lambda x: x[2], reverse=True)
-            min_ask = min([x[2] for x in data])
-            max_bid = max([x[1] for x in data])
-            spread = max_bid - min_ask
-            spread_pct = (spread / min_ask) * 100
+app.layout = html.Div([
+    html.H2("💹 Moniteur Crypto Multi-Exchanges", style={'textAlign': 'center'}),
+    dcc.Dropdown(
+        id='crypto-selector',
+        options=[{'label': name, 'value': symbol} for symbol, name in CRYPTO_SYMBOLS.items()],
+        value='BTC/USDT',
+        style={'width': '300px', 'margin': 'auto'}
+    ),
+    html.Div(id='stats-output', style={'textAlign': 'center', 'marginTop': '20px'}),
+    dash_table.DataTable(
+        id='price-table',
+        columns=[
+            {'name': 'Exchange', 'id': 'Exchange'},
+            {'name': 'Bid (achat)', 'id': 'Bid (achat)', 'type': 'numeric', 'format': {'specifier': '.6f'}},
+            {'name': 'Ask (vente)', 'id': 'Ask (vente)', 'type': 'numeric', 'format': {'specifier': '.6f'}},
+        ],
+        style_table={'margin': '20px auto', 'width': '80%'},
+        style_cell={'textAlign': 'center', 'padding': '8px'},
+        style_header={'backgroundColor': '#f3f3f3', 'fontWeight': 'bold'},
+        style_data_conditional=[
+            {
+                'if': {'row_index': 'odd'},
+                'backgroundColor': '#f9f9f9'
+            }
+        ]
+    ),
+    dcc.Interval(id='interval', interval=60*1000, n_intervals=0)  # 60s
+])
 
-            print(f"💰 Meilleur PRIX D'ACHAT (ask min) : {min_ask:.6f} USD")
-            print(f"💸 Meilleur PRIX DE VENTE (bid max): {max_bid:.6f} USD")
-            print(f"📊 Spread (prix) : {spread:.6f} USD")
-            print(f"📈 Spread (%)   : {spread_pct:.4f} %\n")
+@app.callback(
+    Output('price-table', 'data'),
+    Output('stats-output', 'children'),
+    Input('crypto-selector', 'value'),
+    Input('interval', 'n_intervals')
+)
+def update_table(symbol, _):
+    data = fetch_data(symbol)
+    if not data:
+        return [], html.Div("Aucune donnée disponible", style={'color': 'red'})
 
-            print(f"{'Exchange':<12} {'Bid (achat)':>15} {'Ask (vente)':>15}")
-            print("-" * 45)
-            for ex_id, bid, ask in data:
-                print(f"{ex_id:<12} {bid:>15.6f} {ask:>15.6f}")
+    # Tri par prix ask décroissant
+    sorted_data = sorted(data, key=lambda x: x['Ask (vente)'], reverse=True)
 
-        print("\n⏳ Attente 60 secondes avant la prochaine mise à jour...")
-        time.sleep(60)
+    bids = [row['Bid (achat)'] for row in sorted_data]
+    asks = [row['Ask (vente)'] for row in sorted_data]
+    max_bid = max(bids)
+    min_ask = min(asks)
+    spread = round(max_bid - min_ask, 6)
+    spread_pct = round((spread / min_ask) * 100, 4)
+
+    stats = html.Div([
+        html.H4(f"🟢 Meilleur prix d'achat (Ask le + bas) : {min_ask} USD"),
+        html.H4(f"🔴 Meilleur prix de vente (Bid le + haut) : {max_bid} USD"),
+        html.H4(f"📊 Spread : {spread} USD ({spread_pct}%)"),
+    ])
+    return sorted_data, stats
+
+if __name__ == '__main__':
+    app.run_server(debug=True)
 
 
