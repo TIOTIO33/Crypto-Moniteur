@@ -81,6 +81,14 @@
       margin: 10px;
     }
 
+    .high {
+      color: #00c853; /* vert */
+    }
+
+    .low {
+      color: #d50000; /* rouge */
+    }
+
     table {
       width: 100%;
       margin: 30px 0;
@@ -122,126 +130,4 @@
       padding: 8px 14px;
       border: none;
       border-radius: 8px;
-      background: #444;
-      color: #fff;
-      cursor: pointer;
-      font-weight: bold;
-      transition: background 0.3s;
-    }
-
-    body:not(.dark-mode) #toggle-theme {
-      background: #ddd;
-      color: #111;
-    }
-  </style>
-</head>
-<body>
-  <button id="toggle-theme">🌙 Mode sombre</button>
-
-  <div class="container">
-    <h1>Prix Crypto - Multi-Exchanges</h1>
-    <p id="last-update">Dernière mise à jour : </p>
-
-    <select id="symbol">
-      <option value="BTCUSDT">Bitcoin (BTC)</option>
-      <option value="ETHUSDT">Ethereum (ETH)</option>
-    </select>
-
-    <div class="tradingview-widget">
-      <iframe id="chart" src="" width="100%" height="350" frameborder="0" allowtransparency="true" scrolling="no"></iframe>
-    </div>
-
-    <div class="info-panel">
-      <div id="spread">Spread : ...</div>
-      <div id="high">Plus haut : ...</div>
-      <div id="low">Plus bas : ...</div>
-    </div>
-
-    <table>
-      <thead>
-        <tr>
-          <th>Exchange</th>
-          <th>Prix (USD)</th>
-        </tr>
-      </thead>
-      <tbody id="price-table"></tbody>
-    </table>
-  </div>
-
-  <script>
-    const exchanges = [
-      { name: 'Binance', url: symbol => `https://api.binance.com/api/v3/ticker/price?symbol=${symbol}`, parse: res => parseFloat(res.price) },
-      { name: 'Coinbase', url: symbol => `https://api.coinbase.com/v2/prices/${symbol.replace("USDT", "-USD")}/spot`, parse: res => parseFloat(res.data.amount) },
-      { name: 'Kraken', url: symbol => `https://api.kraken.com/0/public/Ticker?pair=${symbol === 'ETHUSDT' ? 'XETHZUSD' : 'XXBTZUSD'}`, parse: res => parseFloat(symbol === 'ETHUSDT' ? res.result.XETHZUSD.c[0] : res.result.XXBTZUSD.c[0]) },
-      { name: 'OKX', url: symbol => `https://www.okx.com/api/v5/market/ticker?instId=${symbol.replace("USDT", "-USDT")}`, parse: res => parseFloat(res.data[0].last) },
-      { name: 'Huobi', url: symbol => `https://api.huobi.pro/market/detail/merged?symbol=${symbol.toLowerCase()}`, parse: res => parseFloat(res.tick.close) },
-      { name: 'Gemini', url: symbol => `https://api.gemini.com/v1/pubticker/${symbol.replace("USDT", "usd").toLowerCase()}`, parse: res => parseFloat(res.last), only: "BTCUSDT" },
-      { name: 'Bitrue', url: symbol => `https://www.bitrue.com/api/v1/ticker/price?symbol=${symbol}`, parse: res => parseFloat(res.price) }
-    ];
-
-    const symbolSelect = document.getElementById('symbol');
-    const chart = document.getElementById('chart');
-
-    function updateChart(symbol) {
-      chart.src = `https://s.tradingview.com/widgetembed/?symbol=BINANCE:${symbol}&interval=1&theme=${document.body.classList.contains('dark-mode') ? 'dark' : 'light'}&style=1&timezone=Europe%2FParis&withdateranges=1&hideideas=1&hidevolume=1`;
-    }
-
-    async function updatePrices() {
-      const symbol = symbolSelect.value;
-      const tableBody = document.getElementById('price-table');
-      tableBody.innerHTML = '';
-      const prices = [];
-
-      for (const ex of exchanges) {
-        try {
-          if (ex.only && ex.only !== symbol) throw 'Not supported';
-          const res = await fetch(ex.url(symbol));
-          const data = await res.json();
-          const price = ex.parse(data);
-          prices.push(price);
-
-          const row = document.createElement('tr');
-          row.innerHTML = `<td>${ex.name}</td><td class="green">${price.toFixed(2)}</td>`;
-          tableBody.appendChild(row);
-        } catch {
-          const row = document.createElement('tr');
-          row.innerHTML = `<td>${ex.name}</td><td class="red">Erreur</td>`;
-          tableBody.appendChild(row);
-        }
-      }
-
-      if (prices.length > 1) {
-        const max = Math.max(...prices);
-        const min = Math.min(...prices);
-        const spread = max - min;
-        const spreadPercent = (spread / min) * 100;
-
-        document.getElementById('spread').textContent = `Spread : ${spread.toFixed(2)} USDT (${spreadPercent.toFixed(2)}%)`;
-        document.getElementById('high').textContent = `Plus haut : ${max.toFixed(2)} USDT`;
-        document.getElementById('low').textContent = `Plus bas : ${min.toFixed(2)} USDT`;
-      } else {
-        document.getElementById('spread').textContent = 'Pas assez de données pour calculer le spread.';
-        document.getElementById('high').textContent = 'Plus haut : ...';
-        document.getElementById('low').textContent = 'Plus bas : ...';
-      }
-
-      document.getElementById('last-update').textContent = `Dernière mise à jour : ${new Date().toLocaleTimeString()}`;
-    }
-
-    symbolSelect.addEventListener('change', () => {
-      updateChart(symbolSelect.value);
-      updatePrices();
-    });
-
-    document.getElementById('toggle-theme').addEventListener('click', () => {
-      document.body.classList.toggle('dark-mode');
-      document.getElementById('toggle-theme').textContent = document.body.classList.contains('dark-mode') ? '🌞 Mode clair' : '🌙 Mode sombre';
-      updateChart(symbolSelect.value);
-    });
-
-    updateChart(symbolSelect.value);
-    updatePrices();
-    setInterval(updatePrices, 60000);
-  </script>
-</body>
-</html>
+      background: #
