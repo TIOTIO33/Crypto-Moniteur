@@ -1,63 +1,89 @@
 <!DOCTYPE html>
 <html lang="fr">
-<head><meta charset="UTF-8"><title>BTC live</title>
+<head>
+  <meta charset="UTF-8">
+  <title>Live BTC Price & Spread</title>
   <style>
-    body{font-family:sans-serif;padding:20px;}
-    table{border:1px solid #ccc;border-collapse:collapse;width:300px;}
-    th,td{border:1px solid #ccc;padding:8px;text-align:right;}
+    body { font-family:sans-serif; background:#181818; color:#fff; padding:20px; }
+    table { border-collapse:collapse; width:400px; margin-bottom:20px;}
+    th,td { border:1px solid #444; padding:8px; text-align:right;}
+    th { background:#282828; text-align:left;}
   </style>
 </head>
 <body>
-  <h1>Prix BTC/USD en temps réel</h1>
+  <h1>Prix BTC/USDT en temps réel</h1>
   <table>
-    <thead><tr><th>Exchange</th><th>Prix (USD)</th></tr></thead>
+    <thead><tr><th>Exchange</th><th>Prix (USDT)</th></tr></thead>
     <tbody>
-      <tr><td>Binance</td><td id="price-binance">…</td></tr>
-      <tr><td>KuCoin</td><td id="price-kucoin">…</td></tr>
+      <tr><td>Binance</td><td id="binance">…</td></tr>
+      <tr><td>KuCoin</td><td id="kucoin">…</td></tr>
+      <tr><td>Bitfinex</td><td id="bitfinex">…</td></tr>
     </tbody>
   </table>
   <p id="spread">Spread : …</p>
 
 <script>
-let priceBin = null, priceKu = null;
+let pBin, pKu, pBi;
 
+function updateSpread(){
+  if(pBin && pKu && pBi){
+    const arr = [pBin,pKu,pBi];
+    const max = Math.max(...arr), min = Math.min(...arr);
+    const diff = (max-min).toFixed(2);
+    const pct = ((max-min)/min*100).toFixed(2);
+    document.getElementById('spread').textContent =
+      `Spread : ${diff} USDT (${pct} %)  ↓ haut: ${max} ← bas: ${min}`;
+  }
+}
+
+// Binance WebSocket
 const wsBin = new WebSocket("wss://stream.binance.com:9443/ws/btcusdt@ticker");
-wsBin.onmessage = evt => {
-  const d = JSON.parse(evt.data);
-  priceBin = parseFloat(d.c); // dernier prix
-  document.getElementById("price-binance").textContent = priceBin.toFixed(2);
+wsBin.onmessage = e=>{
+  const d = JSON.parse(e.data);
+  pBin = parseFloat(d.c);
+  document.getElementById('binance').textContent = pBin.toFixed(2);
   updateSpread();
 };
 
-const wsKu = new WebSocket("wss://push1-v2.kucoin.com/endpoint"); // endpoint KuCoin
-wsKu.onopen = () => {
-  const sub = {
-    id: Date.now(),
-    type: "subscribe",
-    topic: "/market/ticker:BTC-USDT",
-    privateChannel: false,
-    response: true
+// KuCoin WebSocket (spot via public token)
+async function kucoinConnect(){
+  const tokenRes = await fetch('https://api.kucoin.com/api/v1/bullet-public');
+  const tok = await tokenRes.json();
+  const server = tok.data.instanceServers[0];
+  const wsKu = new WebSocket(`${server.endpoint}?token=${tok.data.token}&connectId=12345`);
+  wsKu.onopen = ()=> {
+    wsKu.send(JSON.stringify({
+      id: Date.now(),
+      type: "subscribe",
+      topic: "/market/ticker:BTC-USDT",
+      response: true
+    }));
   };
-  wsKu.send(JSON.stringify(sub));
+  wsKu.onmessage = e=> {
+    const msg = JSON.parse(e.data);
+    if(msg.data?.price){
+      pKu = parseFloat(msg.data.price);
+      document.getElementById('kucoin').textContent = pKu.toFixed(2);
+      updateSpread();
+    }
+  };
+}
+kucoinConnect();
+
+// Bitfinex WebSocket
+const wsBi = new WebSocket("wss://api.bitfinex.com/ws/1");
+wsBi.onopen = ()=>{
+  wsBi.send(JSON.stringify({ event: "subscribe", channel: "ticker", pair: "BTCUSD" }));
 };
-wsKu.onmessage = evt => {
-  const d = JSON.parse(evt.data);
-  if (d.topic && d.data) {
-    priceKu = parseFloat(d.data.price);
-    document.getElementById("price-kucoin").textContent = priceKu.toFixed(2);
+wsBi.onmessage = e=>{
+  const msg = JSON.parse(e.data);
+  if(Array.isArray(msg) && msg[1] !== "hb"){
+    // last price at index 7
+    pBi = msg[1][7];
+    document.getElementById('bitfinex').textContent = pBi.toFixed(2);
     updateSpread();
   }
 };
-
-function updateSpread(){
-  if (priceBin && priceKu) {
-    const max = Math.max(priceBin, priceKu), min = Math.min(priceBin, priceKu);
-    const spread = (max - min).toFixed(2),
-          pct = ((max-min)/min *100).toFixed(2);
-    document.getElementById("spread").textContent =
-      `Spread : ${spread} USD (${pct} %)`;
-  }
-}
 </script>
 </body>
 </html>
