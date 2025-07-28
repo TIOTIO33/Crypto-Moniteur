@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Comparateur Prix BTC/USDT</title>
   <style>
     body {
@@ -36,7 +36,7 @@
     <thead>
       <tr>
         <th>Exchange</th>
-        <th>Prix</th>
+        <th>Prix (USD)</th>
       </tr>
     </thead>
     <tbody id="price-table">
@@ -66,8 +66,8 @@
       },
       {
         name: 'Kraken',
-        url: 'https://api.kraken.com/0/public/Ticker?pair=XBTUSDT',
-        parse: res => parseFloat(Object.values(res.result)[0].c[0])
+        url: 'https://api.kraken.com/0/public/Ticker?pair=XXBTZUSD',
+        parse: res => parseFloat(res.result.XXBTZUSD.c[0])
       },
       {
         name: 'OKX',
@@ -81,7 +81,7 @@
       },
       {
         name: 'Bitstamp',
-        url: 'https://www.bitstamp.net/api/v2/ticker/btcusdt/',
+        url: 'https://www.bitstamp.net/api/v2/ticker/btcusd/',
         parse: res => parseFloat(res.last)
       },
       {
@@ -94,11 +94,14 @@
         url: 'https://api.huobi.pro/market/detail/merged?symbol=btcusdt',
         parse: res => parseFloat(res.tick.close)
       },
+      // Crypto.com souvent bloqué en CORS, désactivé côté client
+      /*
       {
         name: 'Crypto.com',
         url: 'https://api.crypto.com/v2/public/get-ticker?instrument_name=BTC_USDT',
         parse: res => parseFloat(res.result.data.a)
       },
+      */
       {
         name: 'Gemini',
         url: 'https://api.gemini.com/v1/pubticker/btcusd',
@@ -116,13 +119,13 @@
       },
       {
         name: 'Poloniex',
-        url: 'https://api.poloniex.com/markets/BTC_USDT/price',
-        parse: res => parseFloat(res.price)
+        url: 'https://api.poloniex.com/markets/ticker',
+        parse: res => parseFloat(res.USDT_BTC.last)
       },
       {
         name: 'Phemex',
         url: 'https://api.phemex.com/md/ticker/24hr?symbol=BTCUSDT',
-        parse: res => parseFloat(res.result.lastEp) / 10000  // Format spécial
+        parse: res => parseFloat(res.result.lastEp) / 10000
       }
     ];
 
@@ -134,14 +137,19 @@
       for (const ex of exchanges) {
         try {
           const res = await fetch(ex.url);
+          if (!res.ok) throw new Error(`HTTP error ${res.status}`);
           const data = await res.json();
           const price = ex.parse(data);
+
+          if (isNaN(price)) throw new Error('Prix invalide');
+
           prices.push({ name: ex.name, price });
 
           const row = document.createElement('tr');
           row.innerHTML = `<td>${ex.name}</td><td class="green">${price.toFixed(2)}</td>`;
           tableBody.appendChild(row);
         } catch (err) {
+          console.error(`Erreur avec ${ex.name} :`, err);
           const row = document.createElement('tr');
           row.innerHTML = `<td>${ex.name}</td><td class="red">Erreur</td>`;
           tableBody.appendChild(row);
@@ -153,6 +161,8 @@
         const spread = Math.max(...pricesOnly) - Math.min(...pricesOnly);
         const spreadPercent = (spread / Math.min(...pricesOnly)) * 100;
         document.getElementById('spread').textContent = `${spread.toFixed(2)} USDT (${spreadPercent.toFixed(2)}%)`;
+      } else {
+        document.getElementById('spread').textContent = 'Pas assez de données';
       }
 
       const now = new Date().toLocaleTimeString();
