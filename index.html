@@ -1,89 +1,94 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="UTF-8">
-  <title>Live BTC Price & Spread</title>
-  <style>
-    body { font-family:sans-serif; background:#181818; color:#fff; padding:20px; }
-    table { border-collapse:collapse; width:400px; margin-bottom:20px;}
-    th,td { border:1px solid #444; padding:8px; text-align:right;}
-    th { background:#282828; text-align:left;}
-  </style>
-</head>
-<body>
-  <h1>Prix BTC/USDT en temps réel</h1>
-  <table>
-    <thead><tr><th>Exchange</th><th>Prix (USDT)</th></tr></thead>
-    <tbody>
-      <tr><td>Binance</td><td id="binance">…</td></tr>
-      <tr><td>KuCoin</td><td id="kucoin">…</td></tr>
-      <tr><td>Bitfinex</td><td id="bitfinex">…</td></tr>
-    </tbody>
-  </table>
-  <p id="spread">Spread : …</p>
+<!DOCTYPE html><html lang="fr"><head>
+<meta charset="UTF-8"><title>Live BTC/USDT ~ 15 Exchanges</title>
+<style>
+ body{font-family:sans-serif;background:#181818;color:#fff;padding:20px;}
+ table{border-collapse:collapse;width:100%;max-width:600px;}
+ th,td{border:1px solid #444;padding:8px;text-align:right;}
+ th{background:#282828;text-align:left;}
+</style>
+</head><body>
+<h1>Prix BTC/USDT en temps réel – 15 exchanges</h1>
+<table>
+<thead><tr><th>Exchange</th><th>Prix (USDT)</th></tr></thead>
+<tbody id="prices">
+<tr><td>Binance</td><td id="binance">…</td></tr>
+<tr><td>KuCoin</td><td id="kucoin">…</td></tr>
+<tr><td>Bitfinex</td><td id="bitfinex">…</td></tr>
+<tr><td>OKX</td><td id="okx">…</td></tr>
+<tr><td>Huobi</td><td id="huobi">…</td></tr>
+<tr><td>Gate.io</td><td id="gateio">…</td></tr>
+<tr><td>Crypto.com</td><td id="cryptocom">…</td></tr>
+<tr><td>Coinbase</td><td id="coinbase">…</td></tr>
+<tr><td>Bitstamp</td><td id="bitstamp">…</td></tr>
+<tr><td>Exmo</td><td id="exmo">…</td></tr>
+<tr><td>Gemini</td><td id="gemini">…</td></tr>
+<tr><td>Bittrex</td><td id="bittrex">…</td></tr>
+<tr><td>Poloniex</td><td id="poloniex">…</td></tr>
+<tr><td>KuCoin‑Futures</td><td id="kucoinf">…</td></tr>
+<tr><td>OKX‑Swap</td><td id="okxswap">…</td></tr>
+</tbody>
+</table>
+<p id="spread">Spread : …</p>
 
 <script>
-let pBin, pKu, pBi;
-
-function updateSpread(){
-  if(pBin && pKu && pBi){
-    const arr = [pBin,pKu,pBi];
+const prices = {}; function updateSpread(){
+  const arr = Object.values(prices).filter(v=>v);
+  if(arr.length>=2){
     const max = Math.max(...arr), min = Math.min(...arr);
-    const diff = (max-min).toFixed(2);
-    const pct = ((max-min)/min*100).toFixed(2);
     document.getElementById('spread').textContent =
-      `Spread : ${diff} USDT (${pct} %)  ↓ haut: ${max} ← bas: ${min}`;
+      `Spread : ${(max-min).toFixed(2)} USDT (${((max-min)/min*100).toFixed(2)} %)  ↓ haut: ${max.toFixed(2)} ← bas: ${min.toFixed(2)}`;
   }
 }
 
-// Binance WebSocket
-const wsBin = new WebSocket("wss://stream.binance.com:9443/ws/btcusdt@ticker");
-wsBin.onmessage = e=>{
-  const d = JSON.parse(e.data);
-  pBin = parseFloat(d.c);
-  document.getElementById('binance').textContent = pBin.toFixed(2);
+// Binance
+new WebSocket("wss://stream.binance.com:9443/ws/btcusdt@ticker")
+.onmessage = e=>{
+  const d=JSON.parse(e.data); prices.binance=parseFloat(d.c);
+  document.getElementById('binance').textContent=prices.binance.toFixed(2);
   updateSpread();
 };
 
-// KuCoin WebSocket (spot via public token)
-async function kucoinConnect(){
-  const tokenRes = await fetch('https://api.kucoin.com/api/v1/bullet-public');
-  const tok = await tokenRes.json();
-  const server = tok.data.instanceServers[0];
-  const wsKu = new WebSocket(`${server.endpoint}?token=${tok.data.token}&connectId=12345`);
-  wsKu.onopen = ()=> {
-    wsKu.send(JSON.stringify({
-      id: Date.now(),
-      type: "subscribe",
-      topic: "/market/ticker:BTC-USDT",
-      response: true
-    }));
-  };
-  wsKu.onmessage = e=> {
-    const msg = JSON.parse(e.data);
-    if(msg.data?.price){
-      pKu = parseFloat(msg.data.price);
-      document.getElementById('kucoin').textContent = pKu.toFixed(2);
-      updateSpread();
-    }
-  };
-}
-kucoinConnect();
+// KuCoin
+(async()=>{
+  const tok=await fetch('https://api.kucoin.com/api/v1/bullet-public').then(r=>r.json());
+  const srv=tok.data.instanceServers[0];
+  const w=new WebSocket(`${srv.endpoint}?token=${tok.data.token}&connectId=1`);
+  w.onopen=()=>w.send(JSON.stringify({id:Date.now(),type:"subscribe",topic:"/market/ticker:BTC-USDT",response:true}));
+  w.onmessage=e=>{const m=JSON.parse(e.data); if(m.data?.price){prices.kucoin=parseFloat(m.data.price); document.getElementById('kucoin').textContent=prices.kucoin.toFixed(2); updateSpread();}}
+})();
 
-// Bitfinex WebSocket
-const wsBi = new WebSocket("wss://api.bitfinex.com/ws/1");
-wsBi.onopen = ()=>{
-  wsBi.send(JSON.stringify({ event: "subscribe", channel: "ticker", pair: "BTCUSD" }));
+// Bitfinex
+new WebSocket("wss://api.bitfinex.com/ws/1").onopen=e=>e.target.send(JSON.stringify({event:"subscribe",channel:"ticker",pair:"BTCUSD"}));
+window.addEventListener('message',e=>{ try{const m=JSON.parse(e.data);
+ if(Array.isArray(m) && m[1]!="hb"){prices.bitfinex=m[1][7]; document.getElementById('bitfinex').textContent=prices.bitfinex.toFixed(2); updateSpread();}}catch{}
+});
+
+// Autres exchanges REST toutes les secondes
+const restExchanges = {
+  okx:"https://www.okx.com/api/v5/market/ticker?instId=BTC-USDT",
+  huobi:"https://api.huobi.pro/market/detail/merged?symbol=btcusdt",
+  gateio:"https://api.gateio.ws/api/v4/spot/tickers?currency_pair=BTC_USDT",
+  cryptocom:"https://api.crypto.com/exchange/v1/public/get-ticker?instrument_name=BTC_USDT",
+  coinbase:"https://api.coinbase.com/v2/prices/BTC-USD/spot",
+  bitstamp:"https://www.bitstamp.net/api/v2/ticker/btcusd/",
+  exmo:"https://api.exmo.com/v1/ticker",
+  gemini:"https://api.gemini.com/v1/pubticker/btcusd",
+  bittrex:"https://api.bittrex.com/v3/markets/BTC-USDT/ticker",
+  poloniex:"https://poloniex.com/public?command=returnTicker",
+  kucoinf:"https://api.kucoin.com/api/v1/market/orderbook/level1?symbol=BTC-USDT",
+  okxswap:"https://www.okx.com/api/v5/market/ticker?instId=BTC-USD-SWAP"
 };
-wsBi.onmessage = e=>{
-  const msg = JSON.parse(e.data);
-  if(Array.isArray(msg) && msg[1] !== "hb"){
-    // last price at index 7
-    pBi = msg[1][7];
-    document.getElementById('bitfinex').textContent = pBi.toFixed(2);
-    updateSpread();
+async function poll(){
+  for(const id in restExchanges){
+    try{
+      const j=await fetch(restExchanges[id]).then(r=>r.json()), v=parseFloat(
+        j.data?.last||j.result?.price||j.last||j.last_price||j.data?.amount||Object.values(j)[0]?.last
+      );
+      if(v){ prices[id]=v; document.getElementById(id).textContent=v.toFixed(2); }
+    }catch{} 
   }
-};
+  updateSpread();
+}
+setInterval(poll,1000); poll();
 </script>
-</body>
-</html>
+</body></html>
