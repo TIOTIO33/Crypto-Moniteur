@@ -2,51 +2,93 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Prix BTC en Temps Réel</title>
+  <title>Prix BTC Futures Multi-Exchange</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      margin-top: 50px;
-    }
-    .price-box {
-      font-size: 1.5rem;
-      margin-top: 20px;
-    }
+    body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
+    table { width: 80%; margin: 20px auto; border-collapse: collapse; }
+    th, td { padding: 10px; border: 1px solid #ddd; }
+    th { background-color: #f3f3f3; }
+    tr:nth-child(odd) { background-color: #f9f9f9; }
   </style>
 </head>
 <body>
-
-  <h2>💹 Prix du Bitcoin (BTC/USDT) en Temps Réel - Binance</h2>
-
-  <div class="price-box" id="prices">
-    Chargement des données en cours...
-  </div>
+  <h2>💹 Prix BTC/USDT Futures en Temps Réel</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Exchange</th>
+        <th>Last</th>
+        <th>Bid</th>
+        <th>Ask</th>
+      </tr>
+    </thead>
+    <tbody id="price-table">
+      <tr><td colspan="4">Chargement...</td></tr>
+    </tbody>
+  </table>
 
   <script>
-    async function fetchBTCPrice() {
-      try {
-        const res = await fetch('https://api.binance.com/api/v3/ticker/bookTicker?symbol=BTCUSDT');
-        const data = await res.json();
-        const bid = parseFloat(data.bidPrice).toFixed(2);
-        const ask = parseFloat(data.askPrice).toFixed(2);
-        const spread = (ask - bid).toFixed(2);
-        const spreadPct = ((spread / ask) * 100).toFixed(4);
+    async function fetchBitget() {
+      const res = await fetch("https://api.bitget.com/api/v2/mix/market/ticker?symbol=BTCUSDT&productType=umcbl");
+      const data = await res.json();
+      const d = data.data;
+      return {
+        exchange: 'Bitget',
+        last: parseFloat(d.last).toFixed(2),
+        bid: parseFloat(d.bestBid).toFixed(2),
+        ask: parseFloat(d.bestAsk).toFixed(2)
+      };
+    }
 
-        document.getElementById('prices').innerHTML = `
-          🟢 <strong>Bid (achat)</strong> : ${bid} USD<br>
-          🔴 <strong>Ask (vente)</strong> : ${ask} USD<br>
-          📊 <strong>Spread</strong> : ${spread} USD (${spreadPct}%)
-        `;
-      } catch (error) {
-        document.getElementById('prices').innerHTML = "Erreur lors du chargement des données.";
-        console.error(error);
+    async function fetchBinance() {
+      const res = await fetch("https://fapi.binance.com/fapi/v1/ticker/bookTicker?symbol=BTCUSDT");
+      const d = await res.json();
+      return {
+        exchange: 'Binance Futures',
+        last: '-',  // pas dispo ici
+        bid: parseFloat(d.bidPrice).toFixed(2),
+        ask: parseFloat(d.askPrice).toFixed(2)
+      };
+    }
+
+    async function fetchBybit() {
+      const res = await fetch("https://api.bybit.com/v2/public/tickers?symbol=BTCUSDT");
+      const data = await res.json();
+      const d = data.result[0];
+      return {
+        exchange: 'Bybit',
+        last: parseFloat(d.last_price).toFixed(2),
+        bid: parseFloat(d.bid_price).toFixed(2),
+        ask: parseFloat(d.ask_price).toFixed(2)
+      };
+    }
+
+    async function updatePrices() {
+      const table = document.getElementById("price-table");
+      table.innerHTML = "<tr><td colspan='4'>Chargement...</td></tr>";
+      try {
+        const prices = await Promise.all([
+          fetchBitget(),
+          fetchBinance(),
+          fetchBybit()
+        ]);
+
+        table.innerHTML = prices.map(p => `
+          <tr>
+            <td>${p.exchange}</td>
+            <td>${p.last}</td>
+            <td>${p.bid}</td>
+            <td>${p.ask}</td>
+          </tr>
+        `).join('');
+      } catch (e) {
+        table.innerHTML = "<tr><td colspan='4'>Erreur de chargement</td></tr>";
+        console.error(e);
       }
     }
 
-    fetchBTCPrice();
-    setInterval(fetchBTCPrice, 10000); // Actualisation toutes les 10 secondes
+    updatePrices();
+    setInterval(updatePrices, 10000); // toutes les 10 sec
   </script>
-
 </body>
 </html>
