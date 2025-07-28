@@ -238,8 +238,8 @@
         const spreadPercent = (spread / min) * 100;
 
         document.getElementById('spread').textContent = `Spread : ${spread.toFixed(2)} USDT (${spreadPercent.toFixed(2)}%)`;
-        document.getElementById('high').textContent = `Plus haut : ${max.toFixed(2)} USDT`;
-        document.getElementById('low').textContent = `Plus bas : ${min.toFixed(2)} USDT`;
+        document.getElementById('high').innerHTML = `<span class="high">Plus haut :</span> ${max.toFixed(2)} USDT`;
+        document.getElementById('low').innerHTML = `<span class="low">Plus bas :</span> ${min.toFixed(2)} USDT`;
       } else {
         document.getElementById('spread').textContent = 'Pas assez de données pour calculer le spread.';
         document.getElementById('high').textContent = 'Plus haut : ...';
