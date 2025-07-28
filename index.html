@@ -3,200 +3,115 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Comparateur Prix BTC/USDT</title>
+  <title>Comparateur Prix Crypto</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <style>
-    :root {
-      --bg-color: rgba(255,255,255,0.9);
-      --text-color: #111;
-      --table-bg: rgba(255, 255, 255, 0.85);
-      --th-bg: #eaeaea;
-      --hover-bg: #ddd;
-    }
-
-    body.dark-mode {
-      --bg-color: rgba(10,10,10,0.9);
-      --text-color: #f1f1f1;
-      --table-bg: rgba(0, 0, 0, 0.75);
-      --th-bg: #1c1c1c;
-      --hover-bg: #2e2e2e;
-    }
-
-    body {
-      margin: 0;
-      font-family: 'Inter', sans-serif;
-      background: var(--bg-color) url('https://user-gen-media-assets.s3.amazonaws.com/gpt4o_images/e5dce12a-d25b-45ce-ad91-87776a695df5.png') no-repeat center center fixed;
-      background-size: cover;
-      color: var(--text-color);
-      padding: 40px 20px;
-      transition: background 0.3s, color 0.3s;
-    }
-
-    .container {
-      max-width: 1200px;
-      margin: auto;
-    }
-
-    h1 {
-      text-align: center;
-      font-size: 2rem;
-      margin-bottom: 10px;
-    }
-
-    #last-update {
-      text-align: center;
-      color: #888;
-      font-size: 0.9rem;
-    }
-
-    table {
-      width: 100%;
-      margin: 30px 0;
-      border-collapse: collapse;
-      background: var(--table-bg);
-      box-shadow: 0 0 20px rgba(0,0,0,0.1);
-      border-radius: 8px;
-      overflow: hidden;
-    }
-
-    th, td {
-      padding: 15px;
-      text-align: center;
-    }
-
-    th {
-      background: var(--th-bg);
-      color: var(--text-color);
-      font-weight: 600;
-    }
-
-    tr:hover {
-      background: var(--hover-bg);
-    }
-
-    td.green {
-      color: #00aa6c;
-      font-weight: 600;
-    }
-
-    td.red {
-      color: #d33;
-    }
-
-    #spread {
-      text-align: center;
-      font-size: 1.2rem;
-      margin-top: 30px;
-      font-weight: 600;
-      color: #ffa726;
-    }
-
-    .tradingview-widget {
-      max-width: 100%;
-      margin: 40px auto;
-      border: 1px solid #ccc;
-      border-radius: 10px;
-      overflow: hidden;
-    }
-
-    #toggle-theme {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      padding: 8px 14px;
-      border: none;
-      border-radius: 8px;
-      background: #444;
-      color: #fff;
-      cursor: pointer;
-      font-weight: bold;
-      transition: background 0.3s;
-    }
-
-    body:not(.dark-mode) #toggle-theme {
-      background: #ddd;
-      color: #111;
-    }
+    :root{--bg-light:rgba(255,255,255,0.9);--text-light:#111;--table-light:rgba(255,255,255,0.85);--bg-dark:rgba(10,10,10,0.9);--text-dark:#f1f1f1;--table-dark:rgba(0,0,0,0.75);}
+    body{margin:0;font-family:'Inter',sans-serif;transition:0.3s;}
+    body.light-mode{background:var(--bg-light);color:var(--text-light);}
+    body:not(.light-mode){background:var(--bg-dark);color:var(--text-dark);}
+    .container{max-width:900px;margin:auto;padding:20px;}
+    select{padding:8px;font-size:1rem;margin:10px;}
+    .tradingview-widget{width:100%;height:350px;border:1px solid #ccc;border-radius:10px;overflow:hidden;margin-bottom:20px;}
+    table{width:100%;border-collapse:collapse;margin-top:10px;background:var(--table-dark);border-radius:8px;overflow:hidden;}
+    body.light-mode table{background:var(--table-light);}
+    th,td{padding:12px;text-align:center;border:1px solid #444;}
+    th{background:#333;color:#fff;}
+    body.light-mode th{background:#eee;color:#000;}
+    tr:hover{background:var(--table-dark);}
+    body.light-mode tr:hover{background:var(--table-light);}
+    td.green{color:#0f0;font-weight:600;} td.red{color:#f33;}
+    #spread{margin-top:10px;font-size:1.1rem;font-weight:600;text-align:center;}
+    button{position:fixed;top:20px;right:20px;padding:8px;font-size:1rem;cursor:pointer;}
   </style>
 </head>
-<body>
+<body class="light-mode">
   <button id="toggle-theme">🌙 Mode sombre</button>
-
   <div class="container">
-    <h1>Prix BTC/USDT - Multi-Exchanges</h1>
-    <p id="last-update">Dernière mise à jour : </p>
+    <h1>Comparateur Prix Crypto</h1>
+    <label for="symbol">Sélectionne une crypto :</label>
+    <select id="symbol">
+      <option value="BTCUSDT">Bitcoin (BTC)</option>
+      <option value="ETHUSDT">Ethereum (ETH)</option>
+      <option value="BNBUSDT">Binance Coin (BNB)</option>
+      <option value="XRPUSDT">XRP (XRP)</option>
+      <option value="ADAUSDT">Cardano (ADA)</option>
+      <option value="SOLUSDT">Solana (SOL)</option>
+      <option value="DOGEUSDT">Dogecoin (DOGE)</option>
+      <option value="SHIBUSDT">Shiba Inu (SHIB)</option>
+      <option value="LTCUSDT">Litecoin (LTC)</option>
+      <option value="LINKUSDT">Chainlink (LINK)</option>
+      <option value="AVAXUSDT">Avalanche (AVAX)</option>
+      <option value="DOTUSDT">Polkadot (DOT)</option>
+      <option value="TRXUSDT">Tron (TRX)</option>
+      <option value="XMRUSDT">Monero (XMR)</option>
+      <option value="UNIUSDT">Uniswap (UNI)</option>
+      <option value="USDCUSDT">USD Coin (USDC)</option>
+      <option value="USDTUSDT">Tether (USDT)</option>
+      <option value="BCHUSDT">Bitcoin Cash (BCH)</option>
+      <option value="XLMUSDT">Stellar (XLM)</option>
+      <option value="FILUSDT">Filecoin (FIL)</option>
+    </select>
 
-    <div class="tradingview-widget">
-      <iframe src="https://s.tradingview.com/widgetembed/?frameElementId=tradingview_d56bc&symbol=BINANCE:BTCUSDT&interval=1&hidesidetoolbar=1&symboledit=1&saveimage=1&toolbarbg=f1f3f6&studies=[]&theme=dark&style=1&timezone=Europe%2FParis&withdateranges=1&hideideas=1&hidevolume=1"
-              width="100%" height="350" frameborder="0" allowtransparency="true" scrolling="no"></iframe>
+    <div class="tradingview-widget" id="chart-div">
+      <iframe id="tvchart" src="" frameborder="0" scrolling="no"></iframe>
     </div>
 
     <table>
-      <thead>
-        <tr>
-          <th>Exchange</th>
-          <th>Prix (USD)</th>
-        </tr>
-      </thead>
+      <thead><tr><th>Exchange</th><th>Prix</th></tr></thead>
       <tbody id="price-table"></tbody>
     </table>
-
-    <p id="spread">Calcul du spread...</p>
+    <div id="spread"></div>
   </div>
 
   <script>
-    const exchanges = [
-      { name: 'Binance', url: 'https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT', parse: res => parseFloat(res.price) },
-      { name: 'Coinbase', url: 'https://api.coinbase.com/v2/prices/BTC-USD/spot', parse: res => parseFloat(res.data.amount) },
-      { name: 'Kraken', url: 'https://api.kraken.com/0/public/Ticker?pair=XXBTZUSD', parse: res => parseFloat(res.result.XXBTZUSD.c[0]) },
-      { name: 'OKX', url: 'https://www.okx.com/api/v5/market/ticker?instId=BTC-USDT', parse: res => parseFloat(res.data[0].last) },
-      { name: 'Huobi', url: 'https://api.huobi.pro/market/detail/merged?symbol=btcusdt', parse: res => parseFloat(res.tick.close) },
-      { name: 'Gemini', url: 'https://api.gemini.com/v1/pubticker/btcusd', parse: res => parseFloat(res.last) },
-      { name: 'Bitrue', url: 'https://www.bitrue.com/api/v1/ticker/price?symbol=BTCUSDT', parse: res => parseFloat(res.price) }
+    const exps = [
+      {name:'Binance',url:s=>`https://api.binance.com/api/v3/ticker/price?symbol=${s}`,parse:r=>parseFloat(r.price)},
+      {name:'Coinbase',url:s=>s.startsWith('USDT')?`https://api.coinbase.com/v2/prices/${s.slice(0,-4)}-USD/spot`:null,parse:r=>parseFloat(r.data.amount)},
+      // autres exchanges compatibles USDT...
     ];
-
-    async function updatePrices() {
-      const tableBody = document.getElementById('price-table');
-      tableBody.innerHTML = '';
-      const prices = [];
-
-      for (const ex of exchanges) {
-        try {
-          const res = await fetch(ex.url);
-          const data = await res.json();
-          const price = ex.parse(data);
-          prices.push({ name: ex.name, price });
-
-          const row = document.createElement('tr');
-          row.innerHTML = `<td>${ex.name}</td><td class="green">${price.toFixed(2)}</td>`;
-          tableBody.appendChild(row);
-        } catch {
-          const row = document.createElement('tr');
-          row.innerHTML = `<td>${ex.name}</td><td class="red">Erreur</td>`;
-          tableBody.appendChild(row);
+    const symbolSelect=document.getElementById('symbol');
+    const chartFrame=document.getElementById('tvchart');
+    function updateChart(sym){
+      const pair=sym.replace('USDT','');
+      chartFrame.src=`https://s.tradingview.com/widgetembed/?symbol=BINANCE:${sym}&interval=1&theme=`+(document.body.classList.contains('light-mode')?'light':'dark');
+    }
+    async function updatePrices(){
+      const sym=symbolSelect.value;
+      const tbody=document.getElementById('price-table'); tbody.innerHTML='';
+      const prices=[];
+      for(const ex of exps){
+        try{
+          const res=await fetch(ex.url(sym));
+          const d=await res.json();
+          const p=ex.parse(d);
+          prices.push(p);
+          const tr=document.createElement('tr');
+          tr.innerHTML=`<td>${ex.name}</td><td class="green">${p.toFixed(4)}</td>`;
+          tbody.appendChild(tr);
+        }catch{
+          const tr=document.createElement('tr'); tr.innerHTML=`<td>${ex.name}</td><td class="red">Erreur</td>`;
+          tbody.appendChild(tr);
         }
       }
-
-      if (prices.length > 1) {
-        const values = prices.map(p => p.price);
-        const spread = Math.max(...values) - Math.min(...values);
-        const spreadPercent = (spread / Math.min(...values)) * 100;
-        document.getElementById('spread').textContent = `Spread : ${spread.toFixed(2)} USDT (${spreadPercent.toFixed(2)}%)`;
-      } else {
-        document.getElementById('spread').textContent = 'Pas assez de données pour calculer le spread.';
+      if(prices.length>1){
+        const mn=Math.min(...prices), mx=Math.max(...prices);
+        const spread=(mx-mn), pct=spread/mn*100;
+        document.getElementById('spread').textContent=`Spread : ${spread.toFixed(4)} USDT (${pct.toFixed(2)}%)`;
       }
-
-      document.getElementById('last-update').textContent = `Dernière mise à jour : ${new Date().toLocaleTimeString()}`;
     }
-
-    updatePrices();
-    setInterval(updatePrices, 60000);
-
-    const toggleBtn = document.getElementById('toggle-theme');
-    toggleBtn.addEventListener('click', () => {
-      document.body.classList.toggle('dark-mode');
-      toggleBtn.textContent = document.body.classList.contains('dark-mode') ? '🌞 Mode clair' : '🌙 Mode sombre';
+    symbolSelect.addEventListener('change',()=>{
+      updateChart(symbolSelect.value);
+      updatePrices();
     });
+    document.getElementById('toggle-theme').onclick=()=>{
+      document.body.classList.toggle('light-mode');
+      updateChart(symbolSelect.value);
+    };
+    // init
+    updateChart(symbolSelect.value);
+    updatePrices();
+    setInterval(updatePrices,60000);
   </script>
 </body>
 </html>
