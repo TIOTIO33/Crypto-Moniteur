@@ -2,86 +2,51 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Crypto Monitor Pro</title>
+  <title>Prix BTC en Temps Réel</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       text-align: center;
+      margin-top: 50px;
     }
-    h2 {
-      margin-top: 30px;
-    }
-    select {
-      width: 300px;
-      padding: 10px;
-      margin: 20px auto;
-    }
-    table {
-      width: 80%;
-      margin: 20px auto;
-      border-collapse: collapse;
-    }
-    th, td {
-      padding: 10px;
-      border: 1px solid #ddd;
-    }
-    th {
-      background-color: #f3f3f3;
-    }
-    tr:nth-child(odd) {
-      background-color: #f9f9f9;
-    }
-    .stats {
+    .price-box {
+      font-size: 1.5rem;
       margin-top: 20px;
     }
   </style>
 </head>
 <body>
 
-  <h2>💹 Moniteur Crypto Multi-Exchanges</h2>
+  <h2>💹 Prix du Bitcoin (BTC/USDT) en Temps Réel - Binance</h2>
 
-  <select id="crypto-selector" disabled>
-    <option selected>Bitcoin (BTC)</option>
-    <option>Ethereum (ETH)</option>
-    <option>Solana (SOL)</option>
-    <option>Ripple (XRP)</option>
-    <option>Cardano (ADA)</option>
-  </select>
-
-  <div class="stats">
-    <h4>🟢 Meilleur prix d'achat (Ask le + bas) : 29450.00 USD</h4>
-    <h4>🔴 Meilleur prix de vente (Bid le + haut) : 29510.00 USD</h4>
-    <h4>📊 Spread : 60.00 USD (0.2037%)</h4>
+  <div class="price-box" id="prices">
+    Chargement des données en cours...
   </div>
 
-  <table>
-    <thead>
-      <tr>
-        <th>Exchange</th>
-        <th>Bid (achat)</th>
-        <th>Ask (vente)</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>bitget</td>
-        <td>29510.000000</td>
-        <td>29460.000000</td>
-      </tr>
-      <tr>
-        <td>kucoin</td>
-        <td>29490.000000</td>
-        <td>29455.000000</td>
-      </tr>
-      <tr>
-        <td>kraken</td>
-        <td>29475.000000</td>
-        <td>29450.000000</td>
-      </tr>
-    </tbody>
-  </table>
+  <script>
+    async function fetchBTCPrice() {
+      try {
+        const res = await fetch('https://api.binance.com/api/v3/ticker/bookTicker?symbol=BTCUSDT');
+        const data = await res.json();
+        const bid = parseFloat(data.bidPrice).toFixed(2);
+        const ask = parseFloat(data.askPrice).toFixed(2);
+        const spread = (ask - bid).toFixed(2);
+        const spreadPct = ((spread / ask) * 100).toFixed(4);
+
+        document.getElementById('prices').innerHTML = `
+          🟢 <strong>Bid (achat)</strong> : ${bid} USD<br>
+          🔴 <strong>Ask (vente)</strong> : ${ask} USD<br>
+          📊 <strong>Spread</strong> : ${spread} USD (${spreadPct}%)
+        `;
+      } catch (error) {
+        document.getElementById('prices').innerHTML = "Erreur lors du chargement des données.";
+        console.error(error);
+      }
+    }
+
+    fetchBTCPrice();
+    setInterval(fetchBTCPrice, 10000); // Actualisation toutes les 10 secondes
+  </script>
 
 </body>
 </html>
-
-
