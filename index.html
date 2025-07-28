@@ -64,6 +64,23 @@
       overflow: hidden;
     }
 
+    .info-panel {
+      display: flex;
+      justify-content: space-around;
+      flex-wrap: wrap;
+      margin: 30px 0;
+      background: var(--table-bg);
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    }
+
+    .info-panel div {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin: 10px;
+    }
+
     table {
       width: 100%;
       margin: 30px 0;
@@ -96,14 +113,6 @@
 
     td.red {
       color: #d33;
-    }
-
-    #spread {
-      text-align: center;
-      font-size: 1.2rem;
-      margin-top: 30px;
-      font-weight: 600;
-      color: #ffa726;
     }
 
     #toggle-theme {
@@ -142,6 +151,12 @@
       <iframe id="chart" src="" width="100%" height="350" frameborder="0" allowtransparency="true" scrolling="no"></iframe>
     </div>
 
+    <div class="info-panel">
+      <div id="spread">Spread : ...</div>
+      <div id="high">Plus haut : ...</div>
+      <div id="low">Plus bas : ...</div>
+    </div>
+
     <table>
       <thead>
         <tr>
@@ -151,8 +166,6 @@
       </thead>
       <tbody id="price-table"></tbody>
     </table>
-
-    <p id="spread">Calcul du spread...</p>
   </div>
 
   <script>
@@ -198,11 +211,18 @@
       }
 
       if (prices.length > 1) {
-        const spread = Math.max(...prices) - Math.min(...prices);
-        const spreadPercent = (spread / Math.min(...prices)) * 100;
+        const max = Math.max(...prices);
+        const min = Math.min(...prices);
+        const spread = max - min;
+        const spreadPercent = (spread / min) * 100;
+
         document.getElementById('spread').textContent = `Spread : ${spread.toFixed(2)} USDT (${spreadPercent.toFixed(2)}%)`;
+        document.getElementById('high').textContent = `Plus haut : ${max.toFixed(2)} USDT`;
+        document.getElementById('low').textContent = `Plus bas : ${min.toFixed(2)} USDT`;
       } else {
         document.getElementById('spread').textContent = 'Pas assez de données pour calculer le spread.';
+        document.getElementById('high').textContent = 'Plus haut : ...';
+        document.getElementById('low').textContent = 'Plus bas : ...';
       }
 
       document.getElementById('last-update').textContent = `Dernière mise à jour : ${new Date().toLocaleTimeString()}`;
