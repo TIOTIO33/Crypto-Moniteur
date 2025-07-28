@@ -48,19 +48,6 @@
   <p id="spread"></p>
 
   <script>
-    // Fonction pour fetch direct puis fallback proxy
-    async function fetchWithFallback(directUrl, proxyUrl) {
-      try {
-        let res = await fetch(directUrl);
-        if (!res.ok) throw new Error('Direct fetch failed with status ' + res.status);
-        return await res.json();
-      } catch {
-        let res = await fetch(proxyUrl);
-        if (!res.ok) throw new Error('Proxy fetch failed with status ' + res.status);
-        return await res.json();
-      }
-    }
-
     const exchanges = [
       { name: 'Binance', url: 'https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT', parse: res => parseFloat(res.price) },
       { name: 'Coinbase', url: 'https://api.coinbase.com/v2/prices/BTC-USD/spot', parse: res => parseFloat(res.data.amount) },
@@ -69,33 +56,7 @@
       { name: 'Bitstamp', url: 'https://www.bitstamp.net/api/v2/ticker/btcusd/', parse: res => parseFloat(res.last) },
       { name: 'Huobi', url: 'https://api.huobi.pro/market/detail/merged?symbol=btcusdt', parse: res => parseFloat(res.tick.close) },
       { name: 'Gemini', url: 'https://api.gemini.com/v1/pubticker/btcusd', parse: res => parseFloat(res.last) },
-      { name: 'Bitrue', url: 'https://www.bitrue.com/api/v1/ticker/price?symbol=BTCUSDT', parse: res => parseFloat(res.price) },
-
-      // Bitget Futures avec fallback direct puis proxy
-      { 
-        name: 'Bitget Futures', 
-        directUrl: 'https://api.bitget.com/api/v2/mix/market/candles?symbol=BTCUSDT_UMCBL&granularity=60&limit=1',
-        proxyUrl: 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://api.bitget.com/api/v2/mix/market/candles?symbol=BTCUSDT_UMCBL&granularity=60&limit=1'),
-        parse: res => {
-          if (res && res.data && res.data.length > 0 && res.data[0].length >= 5) {
-            return parseFloat(res.data[0][4]);
-          }
-          throw new Error('Données Bitget non disponibles');
-        }
-      },
-
-      // Crypto.com avec fallback direct puis proxy
-      { 
-        name: 'Crypto.com', 
-        directUrl: 'https://api.crypto.com/v2/public/get-ticker?instrument_name=BTC_USDT',
-        proxyUrl: 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://api.crypto.com/v2/public/get-ticker?instrument_name=BTC_USDT'),
-        parse: res => {
-          if (res && res.result && res.result.data && res.result.data.a) {
-            return parseFloat(res.result.data.a);
-          }
-          throw new Error('Données Crypto.com non disponibles');
-        }
-      }
+      { name: 'Bitrue', url: 'https://www.bitrue.com/api/v1/ticker/price?symbol=BTCUSDT', parse: res => parseFloat(res.price) }
     ];
 
     async function updatePrices() {
@@ -105,14 +66,9 @@
 
       for (const ex of exchanges) {
         try {
-          let data;
-          if (ex.directUrl && ex.proxyUrl) {
-            data = await fetchWithFallback(ex.directUrl, ex.proxyUrl);
-          } else {
-            const res = await fetch(ex.url);
-            if (!res.ok) throw new Error('HTTP error ' + res.status);
-            data = await res.json();
-          }
+          const res = await fetch(ex.url);
+          if (!res.ok) throw new Error('HTTP error ' + res.status);
+          const data = await res.json();
           const price = ex.parse(data);
           prices.push({ name: ex.name, price });
 
