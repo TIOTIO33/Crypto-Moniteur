@@ -37,7 +37,7 @@
       margin: auto;
     }
 
-    h1, h2 {
+    h1 {
       text-align: center;
       font-size: 2rem;
       margin-bottom: 10px;
@@ -47,6 +47,7 @@
       text-align: center;
       color: #888;
       font-size: 0.9rem;
+      margin-bottom: 20px;
     }
 
     #symbol {
@@ -54,6 +55,9 @@
       margin: 20px auto;
       padding: 10px;
       font-size: 1rem;
+      max-width: 200px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
     }
 
     .tradingview-widget {
@@ -81,12 +85,14 @@
       margin: 10px;
     }
 
-    .high, #high .high {
-      color: #00c853;
+    .high {
+      color: #00c853; /* vert */
+      font-weight: 700;
     }
 
-    .low, #low .low {
-      color: #d50000;
+    .low {
+      color: #d50000; /* rouge */
+      font-weight: 700;
     }
 
     table {
@@ -135,6 +141,7 @@
       cursor: pointer;
       font-weight: bold;
       transition: background 0.3s;
+      z-index: 10;
     }
 
     body:not(.dark-mode) #toggle-theme {
@@ -142,27 +149,39 @@
       color: #111;
     }
 
-    #news-section {
+    /* Section actualités */
+    .news-section {
+      max-width: 800px;
+      margin: 40px auto;
       background: var(--table-bg);
-      padding: 20px;
       border-radius: 10px;
+      padding: 20px;
       box-shadow: 0 0 20px rgba(0,0,0,0.1);
-      margin-top: 40px;
+      color: var(--text-color);
+    }
+
+    .news-section h2 {
+      text-align: center;
+      margin-bottom: 15px;
     }
 
     #news-list {
       list-style: none;
       padding: 0;
+      max-height: 300px;
+      overflow-y: auto;
     }
 
     #news-list li {
       margin-bottom: 15px;
+      border-bottom: 1px solid #ccc;
+      padding-bottom: 10px;
     }
 
     #news-list a {
-      font-weight: bold;
-      color: inherit;
       text-decoration: none;
+      color: #0077cc;
+      font-weight: 600;
     }
 
     #news-list a:hover {
@@ -170,8 +189,8 @@
     }
 
     #news-list small {
-      display: block;
-      color: #888;
+      color: #666;
+      font-size: 0.85rem;
     }
   </style>
 </head>
@@ -193,8 +212,8 @@
 
     <div class="info-panel">
       <div id="spread">Spread : ...</div>
-      <div id="high">Plus haut : ...</div>
-      <div id="low">Plus bas : ...</div>
+      <div id="high" class="high">Plus haut : ...</div>
+      <div id="low" class="low">Plus bas : ...</div>
     </div>
 
     <table>
@@ -206,13 +225,13 @@
       </thead>
       <tbody id="price-table"></tbody>
     </table>
+  </div>
 
-    <div id="news-section">
-      <h2>Dernières actualités Crypto</h2>
-      <ul id="news-list">
-        <li>Chargement des actualités...</li>
-      </ul>
-    </div>
+  <div class="news-section">
+    <h2>Actualités Crypto</h2>
+    <ul id="news-list">
+      <li>Chargement des actualités...</li>
+    </ul>
   </div>
 
   <script>
@@ -254,8 +273,10 @@
       const validPrices = priceEntries.filter(p => !p.error);
       const values = validPrices.map(p => p.price);
 
+      // Tri du plus haut au plus bas
       validPrices.sort((a, b) => b.price - a.price);
 
+      // Affichage
       for (const entry of validPrices) {
         const row = document.createElement('tr');
         row.innerHTML = `<td>${entry.name}</td><td class="green">${entry.price.toFixed(2)}</td>`;
@@ -275,8 +296,8 @@
         const spreadPercent = (spread / min) * 100;
 
         document.getElementById('spread').textContent = `Spread : ${spread.toFixed(2)} USDT (${spreadPercent.toFixed(2)}%)`;
-        document.getElementById('high').innerHTML = `Plus haut : <span class="high">${max.toFixed(2)} USDT</span>`;
-        document.getElementById('low').innerHTML = `Plus bas : <span class="low">${min.toFixed(2)} USDT</span>`;
+        document.getElementById('high').textContent = `Plus haut : ${max.toFixed(2)} USDT`;
+        document.getElementById('low').textContent = `Plus bas : ${min.toFixed(2)} USDT`;
       } else {
         document.getElementById('spread').textContent = 'Pas assez de données pour calculer le spread.';
         document.getElementById('high').textContent = 'Plus haut : ...';
@@ -291,6 +312,7 @@
       const url = `https://newsapi.org/v2/everything?q=cryptocurrency&language=fr&sortBy=publishedAt&pageSize=5&apiKey=${apiKey}`;
 
       try {
+        // Utilisation d'un proxy CORS pour éviter les erreurs de politique CORS
         const proxyUrl = "https://corsproxy.io/?" + encodeURIComponent(url);
         const res = await fetch(proxyUrl);
         const data = await res.json();
@@ -313,9 +335,9 @@
     }
 
     symbolSelect.addEventListener('change', () => {
-      updateChart(symbolSelect.value);
+      const symbol = symbolSelect.value;
+      updateChart(symbol);
       updatePrices();
-      fetchNews();
     });
 
     document.getElementById('toggle-theme').addEventListener('click', () => {
@@ -327,6 +349,7 @@
     updateChart(symbolSelect.value);
     updatePrices();
     fetchNews();
+
     setInterval(() => {
       updatePrices();
       fetchNews();
