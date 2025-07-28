@@ -1,88 +1,85 @@
-from flask import Flask, render_template_string, jsonify
 import ccxt
+import time
 
-app = Flask(__name__)
-
-# Liste des exchanges à surveiller
-exchanges = {
-    'binance': ccxt.binance(),
-    'coinbase': ccxt.coinbase(),
-    'kraken': ccxt.kraken(),
+# Liste fixe des 5 cryptos
+crypto_options = {
+    '1': 'BTC/USDT',
+    '2': 'ETH/USDT',
+    '3': 'SOL/USDT',
+    '4': 'XRP/USDT',
+    '5': 'ADA/USDT'
 }
 
-# Symboles crypto à surveiller (USD ou USDT selon disponibilité)
-symbols = ['BTC/USDT', 'ETH/USDT']
+# Afficher le menu de sélection
+print("Sélectionne la cryptomonnaie à surveiller :")
+for k, v in crypto_options.items():
+    print(f"{k}. {v}")
 
-# HTML avec Bootstrap et JS en ligne (tout dans le même fichier)
-TEMPLATE = '''
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <title>Crypto Monitor</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body class="bg-dark text-white">
-<div class="container mt-5">
-    <h1 class="mb-4">🪙 Suivi des Prix Crypto en Temps Réel</h1>
-    <table class="table table-dark table-striped">
-        <thead>
-            <tr>
-                <th>Crypto</th>
-                {% for name in exchanges %}
-                <th>{{ name.capitalize() }}</th>
-                {% endfor %}
-            </tr>
-        </thead>
-        <tbody id="price-table">
-            <!-- Les données seront insérées ici -->
-        </tbody>
-    </table>
-</div>
+choice = input("Entrez le numéro correspondant : ").strip()
+selected_symbol = crypto_options.get(choice)
 
-<script>
-async function fetchPrices() {
-    const res = await fetch("/prices");
-    const data = await res.json();
-    const tbody = document.getElementById("price-table");
-    tbody.innerHTML = "";
+if not selected_symbol:
+    print("Choix invalide. Fermeture.")
+    exit()
 
-    for (const [symbol, prices] of Object.entries(data)) {
-        const row = document.createElement("tr");
-        let html = `<td>${symbol.replace("/USDT", "")}</td>`;
-        {% for name in exchanges %}
-        html += `<td>${prices['{{ name }}'] ?? "-"}</td>`;
-        {% endfor %}
-        row.innerHTML = html;
-        tbody.appendChild(row);
-    }
-}
-fetchPrices();
-setInterval(fetchPrices, 5000);
-</script>
-</body>
-</html>
-'''
+print(f"\n🔍 Crypto sélectionnée : {selected_symbol}")
 
-@app.route('/')
-def index():
-    return render_template_string(TEMPLATE, exchanges=exchanges)
+# Liste des 10 exchanges (sans Binance, avec Bitget)
+exchanges = [
+    ccxt.bitget(),
+    ccxt.kraken(),
+    ccxt.kucoin(),
+    ccxt.coinbase(),
+    ccxt.bitfinex(),
+    ccxt.bitstamp(),
+    ccxt.gate(),
+    ccxt.huobi(),
+    ccxt.okx(),
+    ccxt.bybit()
+]
 
-@app.route('/prices')
-def prices():
-    data = {}
-    for symbol in symbols:
-        prices = {}
-        for name, exchange in exchanges.items():
+def fetch_prices(symbol):
+    results = []
+    for ex in exchanges:
+        try:
+            ticker = ex.fetch_ticker(symbol)
+        except Exception:
+            # Retenter avec USD si USDT échoue
             try:
-                ticker = exchange.fetch_ticker(symbol)
-                prices[name] = round(ticker['last'], 2)
-            except Exception:
-                prices[name] = None
-        data[symbol] = prices
-    return jsonify(data)
+                alt_symbol = symbol.replace('USDT', 'USD')
+                ticker = ex.fetch_ticker(alt_symbol)
+            except:
+                continue
 
-if __name__ == '__main__':
-    app.run(debug=True)
+        bid = ticker.get('bid')
+        ask = ticker.get('ask')
+        if bid and ask:
+            results.append((ex.id, bid, ask))
+    return results
+
+# Boucle de rafraîchissement
+while True:
+    print(f"\n===== MISE À JOUR ({selected_symbol}) =====")
+    data = fetch_prices(selected_symbol)
+    
+    if not data:
+        print("Aucune donnée récupérée.")
+    else:
+        # Trier par prix de vente (ask) décroissant
+        data.sort(key=lambda x: x[2], reverse=True)
+
+        # Meilleur prix d'achat (ask le plus bas) et vente (bid le plus haut)
+        min_ask = min([x[2] for x in data])
+        max_bid = max([x[1] for x in data])
+
+        print(f"💰 Meilleur PRIX D'ACHAT (ask le + bas) : {min_ask}")
+        print(f"💸 Meilleur PRIX DE VENTE (bid le + haut) : {max_bid}")
+
+        print(f"\n{'Exchange':<12} {'Bid (achat)':>15} {'Ask (vente)':>15}")
+        print("-" * 45)
+        for ex_id, bid, ask in data:
+            print(f"{ex_id:<12} {bid:>15.6f} {ask:>15.6f}")
+
+    print("\n⏳ Prochaine mise à jour dans 60 secondes...")
+    time.sleep(60)
 
