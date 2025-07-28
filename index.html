@@ -6,13 +6,36 @@
   <title>Comparateur Prix BTC/USDT</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --bg-color: #0a0a0a;
+      --text-color: #f1f1f1;
+      --table-bg: rgba(0, 0, 0, 0.7);
+      --th-bg: #1c1c1c;
+      --hover-bg: #2e2e2e;
+    }
+
+    body.light-mode {
+      --bg-color: #f8f9fa;
+      --text-color: #111;
+      --table-bg: #fff;
+      --th-bg: #eee;
+      --hover-bg: #ddd;
+    }
+
     body {
       margin: 0;
       font-family: 'Inter', sans-serif;
-      background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
-      color: #f1f1f1;
+      background: var(--bg-color) url('https://i.imgur.com/f5UXJby.jpg') no-repeat center center fixed;
+      background-size: cover;
+      color: var(--text-color);
       padding: 40px 20px;
       box-sizing: border-box;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: auto;
     }
 
     h1 {
@@ -29,11 +52,10 @@
 
     table {
       width: 100%;
-      max-width: 900px;
-      margin: 40px auto 20px;
+      margin: 30px 0;
       border-collapse: collapse;
-      background: #1e1e1e;
-      box-shadow: 0 0 20px rgba(0,0,0,0.2);
+      background: var(--table-bg);
+      box-shadow: 0 0 20px rgba(0,0,0,0.4);
       border-radius: 8px;
       overflow: hidden;
     }
@@ -44,26 +66,22 @@
     }
 
     th {
-      background: #292929;
-      color: #fff;
+      background: var(--th-bg);
+      color: var(--text-color);
       font-weight: 600;
     }
 
-    tr {
-      transition: background 0.3s;
-    }
-
     tr:hover {
-      background: #2e2e2e;
+      background: var(--hover-bg);
     }
 
     td.green {
-      color: #00e676;
+      color: #00ff8c;
       font-weight: 600;
     }
 
     td.red {
-      color: #ff5252;
+      color: #ff4c4c;
     }
 
     #spread {
@@ -71,60 +89,65 @@
       font-size: 1.2rem;
       margin-top: 30px;
       font-weight: 600;
-      color: #ffd54f;
+      color: #ffe082;
+      text-shadow: 0 0 5px #000;
     }
 
-    @media (max-width: 600px) {
-      table, thead, tbody, th, td, tr {
-        display: block;
-      }
+    .tradingview-widget {
+      max-width: 100%;
+      margin: 40px auto;
+      border: 1px solid #333;
+      border-radius: 10px;
+      overflow: hidden;
+    }
 
-      tr {
-        margin-bottom: 15px;
-      }
+    #toggle-theme {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 8px 14px;
+      border: none;
+      border-radius: 8px;
+      background: #222;
+      color: #fff;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.3s;
+    }
 
-      th {
-        text-align: left;
-        background: none;
-        padding: 10px 15px;
-      }
-
-      td {
-        text-align: right;
-        padding: 10px 15px;
-        border: none;
-        border-bottom: 1px solid #444;
-        position: relative;
-      }
-
-      td::before {
-        content: attr(data-label);
-        position: absolute;
-        left: 15px;
-        color: #aaa;
-        font-weight: bold;
-      }
+    body.light-mode #toggle-theme {
+      background: #ccc;
+      color: #000;
     }
   </style>
 </head>
 <body>
+  <button id="toggle-theme">🌙 Mode sombre</button>
 
-  <h1>Prix BTC/USDT - Multi-Exchanges</h1>
-  <p id="last-update">Dernière mise à jour : </p>
+  <div class="container">
+    <h1>Prix BTC/USDT - Multi-Exchanges</h1>
+    <p id="last-update">Dernière mise à jour : </p>
 
-  <table>
-    <thead>
-      <tr>
-        <th>Exchange</th>
-        <th>Prix (USD)</th>
-      </tr>
-    </thead>
-    <tbody id="price-table">
-      <!-- Données dynamiques -->
-    </tbody>
-  </table>
+    <div class="tradingview-widget">
+      <!-- TRADINGVIEW WIDGET -->
+      <iframe src="https://s.tradingview.com/widgetembed/?frameElementId=tradingview_d56bc&symbol=BINANCE:BTCUSDT&interval=1&hidesidetoolbar=1&symboledit=1&saveimage=1&toolbarbg=f1f3f6&studies=[]&theme=dark&style=1&timezone=Europe%2FParis&withdateranges=1&hideideas=1&hidevolume=1"
+              width="100%" height="350" frameborder="0" allowtransparency="true" scrolling="no"></iframe>
+    </div>
 
-  <p id="spread">Calcul du spread...</p>
+    <table>
+      <thead>
+        <tr>
+          <th>Exchange</th>
+          <th>Prix (USD)</th>
+        </tr>
+      </thead>
+      <tbody id="price-table">
+        <!-- Données dynamiques -->
+      </tbody>
+    </table>
+
+    <p id="spread">Calcul du spread...</p>
+  </div>
 
   <script>
     const exchanges = [
@@ -151,13 +174,12 @@
           prices.push({ name: ex.name, price });
 
           const row = document.createElement('tr');
-          row.innerHTML = `<td data-label="Exchange">${ex.name}</td><td data-label="Prix (USD)" class="green">${price.toFixed(2)}</td>`;
+          row.innerHTML = `<td>${ex.name}</td><td class="green">${price.toFixed(2)}</td>`;
           tableBody.appendChild(row);
         } catch (err) {
           const row = document.createElement('tr');
-          row.innerHTML = `<td data-label="Exchange">${ex.name}</td><td data-label="Prix (USD)" class="red">Erreur</td>`;
+          row.innerHTML = `<td>${ex.name}</td><td class="red">Erreur</td>`;
           tableBody.appendChild(row);
-          console.warn(`Erreur pour ${ex.name}:`, err.message);
         }
       }
 
@@ -176,7 +198,13 @@
 
     updatePrices();
     setInterval(updatePrices, 60000);
-  </script>
 
+    // Mode sombre/clair
+    const toggleBtn = document.getElementById('toggle-theme');
+    toggleBtn.addEventListener('click', () => {
+      document.body.classList.toggle('light-mode');
+      toggleBtn.textContent = document.body.classList.contains('light-mode') ? '🌞 Mode clair' : '🌙 Mode sombre';
+    });
+  </script>
 </body>
 </html>
