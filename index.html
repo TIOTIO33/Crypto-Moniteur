@@ -3,110 +3,86 @@ import ccxt
 
 app = Flask(__name__)
 
-# Configuration des exchanges
+# Liste des exchanges à surveiller
 exchanges = {
     'binance': ccxt.binance(),
     'coinbase': ccxt.coinbase(),
-    'kraken': ccxt.kraken()
+    'kraken': ccxt.kraken(),
 }
 
-# Symboles à surveiller
+# Symboles crypto à surveiller (USD ou USDT selon disponibilité)
 symbols = ['BTC/USDT', 'ETH/USDT']
 
-# Fonction pour récupérer les prix
-def fetch_prices():
-    data = {}
-    for name, exchange in exchanges.items():
-        data[name] = {}
-        for symbol in symbols:
-            try:
-                ticker = exchange.fetch_ticker(symbol)
-                data[name][symbol] = ticker['last']
-            except Exception as e:
-                data[name][symbol] = f"Erreur: {str(e)}"
-    return data
-
-# Page HTML intégrée
-html_template = """
+# HTML avec Bootstrap et JS en ligne (tout dans le même fichier)
+TEMPLATE = '''
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <title>Crypto Monitor</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            padding: 30px;
-            background-color: #121212;
-            color: white;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-            background-color: #1e1e1e;
-        }
-        th, td {
-            border: 1px solid #333;
-            padding: 10px;
-            text-align: center;
-        }
-        th {
-            background-color: #222;
-        }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
-<body>
-    <h1>📈 Moniteur Crypto Multi-Exchange</h1>
-    <table id="priceTable">
+<body class="bg-dark text-white">
+<div class="container mt-5">
+    <h1 class="mb-4">🪙 Suivi des Prix Crypto en Temps Réel</h1>
+    <table class="table table-dark table-striped">
         <thead>
             <tr>
-                <th>Exchange</th>
-                <th>BTC/USDT</th>
-                <th>ETH/USDT</th>
+                <th>Crypto</th>
+                {% for name in exchanges %}
+                <th>{{ name.capitalize() }}</th>
+                {% endfor %}
             </tr>
         </thead>
-        <tbody id="priceBody">
+        <tbody id="price-table">
+            <!-- Les données seront insérées ici -->
         </tbody>
     </table>
+</div>
 
-    <script>
-        async function loadPrices() {
-            const response = await fetch("/prices");
-            const data = await response.json();
-            const tbody = document.getElementById("priceBody");
-            tbody.innerHTML = "";
+<script>
+async function fetchPrices() {
+    const res = await fetch("/prices");
+    const data = await res.json();
+    const tbody = document.getElementById("price-table");
+    tbody.innerHTML = "";
 
-            for (const exchange in data) {
-                const row = document.createElement("tr");
-                const nameCell = document.createElement("td");
-                nameCell.textContent = exchange;
-                row.appendChild(nameCell);
-
-                ["BTC/USDT", "ETH/USDT"].forEach(symbol => {
-                    const cell = document.createElement("td");
-                    cell.textContent = data[exchange][symbol];
-                    row.appendChild(cell);
-                });
-
-                tbody.appendChild(row);
-            }
-        }
-
-        setInterval(loadPrices, 5000);
-        loadPrices();
-    </script>
+    for (const [symbol, prices] of Object.entries(data)) {
+        const row = document.createElement("tr");
+        let html = `<td>${symbol.replace("/USDT", "")}</td>`;
+        {% for name in exchanges %}
+        html += `<td>${prices['{{ name }}'] ?? "-"}</td>`;
+        {% endfor %}
+        row.innerHTML = html;
+        tbody.appendChild(row);
+    }
+}
+fetchPrices();
+setInterval(fetchPrices, 5000);
+</script>
 </body>
 </html>
-"""
+'''
 
-@app.route("/")
+@app.route('/')
 def index():
-    return render_template_string(html_template)
+    return render_template_string(TEMPLATE, exchanges=exchanges)
 
-@app.route("/prices")
+@app.route('/prices')
 def prices():
-    return jsonify(fetch_prices())
+    data = {}
+    for symbol in symbols:
+        prices = {}
+        for name, exchange in exchanges.items():
+            try:
+                ticker = exchange.fetch_ticker(symbol)
+                prices[name] = round(ticker['last'], 2)
+            except Exception:
+                prices[name] = None
+        data[symbol] = prices
+    return jsonify(data)
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     app.run(debug=True)
+
