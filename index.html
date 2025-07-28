@@ -57,24 +57,28 @@
       { name: 'Huobi', url: 'https://api.huobi.pro/market/detail/merged?symbol=btcusdt', parse: res => parseFloat(res.tick.close) },
       { name: 'Gemini', url: 'https://api.gemini.com/v1/pubticker/btcusd', parse: res => parseFloat(res.last) },
       { name: 'Bitrue', url: 'https://www.bitrue.com/api/v1/ticker/price?symbol=BTCUSDT', parse: res => parseFloat(res.price) },
-      { 
-        name: 'Crypto.com', 
-        url: 'https://corsproxy.io/?https://api.crypto.com/v2/public/get-ticker?instrument_name=BTC_USDT', 
-        parse: res => {
-          if (res && res.result && res.result.data && res.result.data.a) {
-            return parseFloat(res.result.data.a);
-          }
-          throw new Error('Données Crypto.com non disponibles');
-        }
-      },
+
+      // Bitget Futures avec proxy CORS
       { 
         name: 'Bitget Futures', 
-        url: 'https://corsproxy.io/?https://api.bitget.com/api/v2/mix/market/candles?symbol=BTCUSDT_UMCBL&granularity=60&limit=1',
+        url: 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://api.bitget.com/api/v2/mix/market/candles?symbol=BTCUSDT_UMCBL&granularity=60&limit=1'),
         parse: res => {
           if (res && res.data && res.data.length > 0 && res.data[0].length >= 5) {
             return parseFloat(res.data[0][4]);
           }
           throw new Error('Données Bitget non disponibles');
+        }
+      },
+
+      // Crypto.com avec proxy CORS
+      { 
+        name: 'Crypto.com', 
+        url: 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://api.crypto.com/v2/public/get-ticker?instrument_name=BTC_USDT'),
+        parse: res => {
+          if (res && res.result && res.result.data && res.result.data.a) {
+            return parseFloat(res.result.data.a);
+          }
+          throw new Error('Données Crypto.com non disponibles');
         }
       }
     ];
@@ -117,7 +121,7 @@
     }
 
     updatePrices();
-    setInterval(updatePrices, 60000); // Mise à jour toutes les minutes
+    setInterval(updatePrices, 60000);
   </script>
 
 </body>
