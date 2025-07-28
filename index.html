@@ -49,84 +49,56 @@
 
   <script>
     const exchanges = [
-      {
-        name: 'Binance',
-        url: 'https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT',
-        parse: res => parseFloat(res.price)
-      },
-      {
-        name: 'Coinbase',
-        url: 'https://api.coinbase.com/v2/prices/BTC-USD/spot',
-        parse: res => parseFloat(res.data.amount)
-      },
-      {
-        name: 'Bitfinex',
-        url: 'https://api-pub.bitfinex.com/v2/ticker/tBTCUSD',
-        parse: res => parseFloat(res[6])
-      },
-      {
-        name: 'Kraken',
-        url: 'https://api.kraken.com/0/public/Ticker?pair=XXBTZUSD',
-        parse: res => parseFloat(res.result.XXBTZUSD.c[0])
-      },
-      {
-        name: 'OKX',
-        url: 'https://www.okx.com/api/v5/market/ticker?instId=BTC-USDT',
-        parse: res => parseFloat(res.data[0].last)
-      },
-      {
-        name: 'KuCoin',
-        url: 'https://api.kucoin.com/api/v1/market/orderbook/level1?symbol=BTC-USDT',
-        parse: res => parseFloat(res.data.price)
-      },
-      {
-        name: 'Bitstamp',
-        url: 'https://www.bitstamp.net/api/v2/ticker/btcusd/',
-        parse: res => parseFloat(res.last)
-      },
-      {
-        name: 'Gate.io',
-        url: 'https://api.gate.io/api2/1/ticker/btc_usdt',
-        parse: res => parseFloat(res.last)
-      },
-      {
-        name: 'Huobi',
-        url: 'https://api.huobi.pro/market/detail/merged?symbol=btcusdt',
-        parse: res => parseFloat(res.tick.close)
-      },
-      // Crypto.com souvent bloqué en CORS, désactivé côté client
-      /*
-      {
-        name: 'Crypto.com',
-        url: 'https://api.crypto.com/v2/public/get-ticker?instrument_name=BTC_USDT',
-        parse: res => parseFloat(res.result.data.a)
-      },
-      */
-      {
-        name: 'Gemini',
-        url: 'https://api.gemini.com/v1/pubticker/btcusd',
-        parse: res => parseFloat(res.last)
-      },
-      {
-        name: 'MEXC',
-        url: 'https://api.mexc.com/api/v3/ticker/price?symbol=BTCUSDT',
-        parse: res => parseFloat(res.price)
-      },
-      {
-        name: 'Bybit',
-        url: 'https://api.bybit.com/v2/public/tickers?symbol=BTCUSDT',
-        parse: res => parseFloat(res.result[0].last_price)
-      },
-      {
-        name: 'Poloniex',
-        url: 'https://api.poloniex.com/markets/ticker',
-        parse: res => parseFloat(res.USDT_BTC.last)
-      },
-      {
-        name: 'Phemex',
-        url: 'https://api.phemex.com/md/ticker/24hr?symbol=BTCUSDT',
-        parse: res => parseFloat(res.result.lastEp) / 10000
-      }
+      { name: 'Binance', url: 'https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT', parse: res => parseFloat(res.price) },
+      { name: 'Coinbase', url: 'https://api.coinbase.com/v2/prices/BTC-USD/spot', parse: res => parseFloat(res.data.amount) },
+      { name: 'Bitfinex', url: 'https://api-pub.bitfinex.com/v2/ticker/tBTCUSD', parse: res => parseFloat(res[6]) },
+      { name: 'Kraken', url: 'https://api.kraken.com/0/public/Ticker?pair=XXBTZUSD', parse: res => parseFloat(res.result.XXBTZUSD.c[0]) },
+      { name: 'OKX', url: 'https://www.okx.com/api/v5/market/ticker?instId=BTC-USDT', parse: res => parseFloat(res.data[0].last) },
+      { name: 'KuCoin', url: 'https://api.kucoin.com/api/v1/market/orderbook/level1?symbol=BTC-USDT', parse: res => parseFloat(res.data.price) },
+      { name: 'Bitstamp', url: 'https://www.bitstamp.net/api/v2/ticker/btcusd/', parse: res => parseFloat(res.last) },
+      { name: 'Gate.io', url: 'https://api.gate.io/api2/1/ticker/btc_usdt', parse: res => parseFloat(res.last) },
+      { name: 'Huobi', url: 'https://api.huobi.pro/market/detail/merged?symbol=btcusdt', parse: res => parseFloat(res.tick.close) },
+      { name: 'Gemini', url: 'https://api.gemini.com/v1/pubticker/btcusd', parse: res => parseFloat(res.last) },
+      { name: 'MEXC', url: 'https://api.mexc.com/api/v3/ticker/price?symbol=BTCUSDT', parse: res => parseFloat(res.price) },
+      { name: 'Bybit', url: 'https://api.bybit.com/v2/public/tickers?symbol=BTCUSDT', parse: res => parseFloat(res.result[0].last_price) },
+      { name: 'Poloniex', url: 'https://api.poloniex.com/markets/ticker', parse: res => parseFloat(res.USDT_BTC.last) },
+      { name: 'Phemex', url: 'https://api.phemex.com/md/ticker/24hr?symbol=BTCUSDT', parse: res => parseFloat(res.result.lastEp) / 10000 },
+      { name: 'BitMart', url: 'https://api-cloud.bitmart.com/spot/v1/ticker?symbol=BTC_USDT', parse: res => parseFloat(res.data.tickers[0].last_price) },
+      { name: 'Whitebit', url: 'https://whitebit.com/api/v4/public/ticker?market=BTC_USDT', parse: res => parseFloat(res.result.lastPrice) },
+      { name: 'AscendEX', url: 'https://ascendex.com/api/pro/v1/ticker?symbol=BTCUSDT', parse: res => parseFloat(res.data[0].last) },
+      { name: 'WazirX', url: 'https://api.wazirx.com/api/v2/tickers/btcusdt', parse: res => parseFloat(res.ticker.last) },
+      { name: 'Bitrue', url: 'https://www.bitrue.com/api/v1/ticker/price?symbol=BTCUSDT', parse: res => parseFloat(res.price) },
+      { name: 'HitBTC', url: 'https://api.hitbtc.com/api/2/public/ticker/BTCUSDT', parse: res => parseFloat(res.last) },
+      { name: 'Bittrex', url: 'https://api.bittrex.com/v3/markets/BTC-USDT/ticker', parse: res => parseFloat(res.lastTradeRate) },
+      { name: 'Bitvavo', url: 'https://api.bitvavo.com/v2/BTC-EUR/ticker/price', parse: res => parseFloat(res.price) },
+      { name: 'Binance US', url: 'https://api.binance.us/api/v3/ticker/price?symbol=BTCUSD', parse: res => parseFloat(res.price) },
+      { name: 'CEX.IO', url: 'https://cex.io/api/last_price/BTC/USD', parse: res => parseFloat(res.lprice) },
+      { name: 'Exmo', url: 'https://api.exmo.com/v1/ticker/', parse: res => parseFloat(res.BTC_USD.last_trade) },
+      { name: 'Liquid', url: 'https://api.liquid.com/products/1', parse: res => parseFloat(res.last_traded_price) },
+      { name: 'OKCoin', url: 'https://www.okcoin.com/api/spot/v3/instruments/BTC-USDT/ticker', parse: res => parseFloat(res.last) },
+      { name: 'Latoken', url: 'https://api.latoken.com/api/v2/tickers', parse: res => {
+        const pair = res.data.find(p => p.symbol === 'BTCUSDT');
+        return pair ? parseFloat(pair.price) : NaN;
+      }},
+      { name: 'CoinEx', url: 'https://api.coinex.com/v1/market/ticker?market=BTCUSDT', parse: res => parseFloat(res.data.ticker.last) },
+      { name: 'BitFlyer', url: 'https://api.bitflyer.com/v1/ticker?product_code=BTC_USD', parse: res => parseFloat(res[0].ltp) },
+      { name: 'FTX', url: 'https://ftx.com/api/markets/BTC/USDT', parse: res => parseFloat(res.result.last) },
+      { name: 'Hotbit', url: 'https://api.hotbit.io/api/v1/market.detail?market=btc_usdt', parse: res => parseFloat(res.result.last) },
+      { name: 'Bitmax', url: 'https://bitmax.io/api/pro/v1/spot/ticker?symbol=BTCUSDT', parse: res => parseFloat(res.data[0].last) },
+      { name: 'Korbit', url: 'https://api.korbit.co.kr/v1/ticker/detailed?currency_pair=btc_usd', parse: res => parseFloat(res.last) },
+      { name: 'Indodax', url: 'https://indodax.com/api/ticker/btc_usdt', parse: res => parseFloat(res.ticker.last) },
+      { name: 'Coinone', url: 'https://api.coinone.co.kr/ticker?currency=btc', parse: res => parseFloat(res.last) },
+      { name: 'Bitbank', url: 'https://public.bitbank.cc/btc_usdt/ticker', parse: res => parseFloat(res.data.last) },
+      { name: 'Upbit', url: 'https://api.upbit.com/v1/ticker?markets=USDT-BTC', parse: res => parseFloat(res[0].trade_price) },
+      { name: 'Luno', url: 'https://api.luno.com/api/1/tickers', parse: res => {
+        const ticker = res.tickers.find(t => t.pair === 'XBTUSD');
+        return ticker ? parseFloat(ticker.last_trade) : NaN;
+      }},
+      { name: 'Crypto.com', url: 'https://api.crypto.com/v2/public/get-ticker?instrument_name=BTC_USDT', parse: res => parseFloat(res.result.data.a) },
+      { name: 'Bitget', url: 'https://api.bitget.com/api/spot/v1/market/ticker?symbol=BTCUSDT', parse: res => parseFloat(res.data.last) },
+      { name: 'CoinGecko (agrégateur)', url: 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd', parse: res => parseFloat(res.bitcoin.usd) },
+      { name: 'Bitso', url: 'https://api.bitso.com/v3/ticker/?book=btc_usdt', parse: res => parseFloat(res.payload.last) },
+      { name: 'OKEx (legacy)', url: 'https://www.okex.com/api/spot/v3/instruments/BTC-USDT/ticker', parse: res => parseFloat(res.last) }
     ];
 
     async function updatePrices() {
@@ -137,19 +109,15 @@
       for (const ex of exchanges) {
         try {
           const res = await fetch(ex.url);
-          if (!res.ok) throw new Error(`HTTP error ${res.status}`);
           const data = await res.json();
           const price = ex.parse(data);
-
           if (isNaN(price)) throw new Error('Prix invalide');
-
           prices.push({ name: ex.name, price });
 
           const row = document.createElement('tr');
           row.innerHTML = `<td>${ex.name}</td><td class="green">${price.toFixed(2)}</td>`;
           tableBody.appendChild(row);
         } catch (err) {
-          console.error(`Erreur avec ${ex.name} :`, err);
           const row = document.createElement('tr');
           row.innerHTML = `<td>${ex.name}</td><td class="red">Erreur</td>`;
           tableBody.appendChild(row);
@@ -162,7 +130,7 @@
         const spreadPercent = (spread / Math.min(...pricesOnly)) * 100;
         document.getElementById('spread').textContent = `${spread.toFixed(2)} USDT (${spreadPercent.toFixed(2)}%)`;
       } else {
-        document.getElementById('spread').textContent = 'Pas assez de données';
+        document.getElementById('spread').textContent = 'N/A';
       }
 
       const now = new Date().toLocaleTimeString();
@@ -170,7 +138,7 @@
     }
 
     updatePrices();
-    setInterval(updatePrices, 60000); // Mise à jour toutes les minutes
+    setInterval(updatePrices, 60000);
   </script>
 
 </body>
