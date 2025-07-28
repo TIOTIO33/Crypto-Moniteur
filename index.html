@@ -57,27 +57,22 @@
       { name: 'Huobi', url: 'https://api.huobi.pro/market/detail/merged?symbol=btcusdt', parse: res => parseFloat(res.tick.close) },
       { name: 'Gemini', url: 'https://api.gemini.com/v1/pubticker/btcusd', parse: res => parseFloat(res.last) },
       { name: 'Bitrue', url: 'https://www.bitrue.com/api/v1/ticker/price?symbol=BTCUSDT', parse: res => parseFloat(res.price) },
-      // Crypto.com corrigé
       { 
         name: 'Crypto.com', 
-        url: 'https://api.crypto.com/v2/public/get-ticker?instrument_name=BTC_USDT', 
+        url: 'https://corsproxy.io/?https://api.crypto.com/v2/public/get-ticker?instrument_name=BTC_USDT', 
         parse: res => {
-          // vérifier la présence des données avant d'accéder
           if (res && res.result && res.result.data && res.result.data.a) {
             return parseFloat(res.result.data.a);
           }
           throw new Error('Données Crypto.com non disponibles');
         }
       },
-      // Bitget corrigé
       { 
-        name: 'Bitget', 
-        url: 'https://api.bitget.com/api/spot/v1/market/ticker?symbol=BTCUSDT', 
+        name: 'Bitget Futures', 
+        url: 'https://corsproxy.io/?https://api.bitget.com/api/v2/mix/market/candles?symbol=BTCUSDT_UMCBL&granularity=60&limit=1',
         parse: res => {
-          if (res && res.data && res.data.length > 0 && res.data[0].last) {
-            return parseFloat(res.data[0].last);
-          } else if (res && res.data && res.data.last) {
-            return parseFloat(res.data.last);
+          if (res && res.data && res.data.length > 0 && res.data[0].length >= 5) {
+            return parseFloat(res.data[0][4]);
           }
           throw new Error('Données Bitget non disponibles');
         }
@@ -92,9 +87,9 @@
       for (const ex of exchanges) {
         try {
           const res = await fetch(ex.url);
+          if (!res.ok) throw new Error('HTTP error ' + res.status);
           const data = await res.json();
           const price = ex.parse(data);
-          if (isNaN(price)) throw new Error('Prix invalide');
           prices.push({ name: ex.name, price });
 
           const row = document.createElement('tr');
@@ -104,6 +99,7 @@
           const row = document.createElement('tr');
           row.innerHTML = `<td>${ex.name}</td><td class="red">Erreur</td>`;
           tableBody.appendChild(row);
+          console.warn(`Erreur pour ${ex.name}:`, err.message);
         }
       }
 
@@ -113,7 +109,7 @@
         const spreadPercent = (spread / Math.min(...pricesOnly)) * 100;
         document.getElementById('spread').textContent = `${spread.toFixed(2)} USDT (${spreadPercent.toFixed(2)}%)`;
       } else {
-        document.getElementById('spread').textContent = 'N/A';
+        document.getElementById('spread').textContent = 'Données insuffisantes pour calculer le spread';
       }
 
       const now = new Date().toLocaleTimeString();
@@ -121,7 +117,7 @@
     }
 
     updatePrices();
-    setInterval(updatePrices, 60000);
+    setInterval(updatePrices, 60000); // Mise à jour toutes les minutes
   </script>
 
 </body>
