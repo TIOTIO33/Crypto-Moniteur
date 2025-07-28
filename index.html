@@ -2,32 +2,90 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Prix du Bitcoin (BTC)</title>
-  <meta http-equiv="refresh" content="60"> <!-- Rafraîchissement chaque minute -->
+  <title>Suivi des prix BTC</title>
   <style>
-    table {border-collapse: collapse; width: 50%;}
-    th, td {border: 1px solid #999; padding: 4px 8px; text-align: right;}
-    th {background: #eee; text-align: left;}
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    th { background-color: #f2f2f2; }
+    #last-update { margin-top: 10px; font-size: 14px; color: #666; }
   </style>
 </head>
 <body>
   <h1>Prix du Bitcoin (BTC) sur 10 exchanges</h1>
-  <table>
-    <tr><th>Exchange</th><th>Prix (USD)</th></tr>
-    <tr><td>Binance</td><td>51 200.00</td></tr>
-    <tr><td>Coinbase</td><td>51 180.50</td></tr>
-    <tr><td>Kraken</td><td>51 150.25</td></tr>
-    <tr><td>KuCoin</td><td>51 220.00</td></tr>
-    <tr><td>Bitfinex</td><td>51 210.10</td></tr>
-    <tr><td>Bitstamp</td><td>51 170.75</td></tr>
-    <tr><td>Huobi</td><td>51 200.00</td></tr>
-    <tr><td>OKX</td><td>51 205.30</td></tr>
-    <tr><td>Gate.io</td><td>51 195.00</td></tr>
-    <tr><td>Crypto.com</td><td>51 220.00</td></tr>
+  <table id="prices-table">
+    <thead>
+      <tr>
+        <th>Exchange</th>
+        <th>Prix (USD)</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
   </table>
-  <p><strong>Prix le plus élevé :</strong> 51 220.00 $ (KuCoin/Crypto.com).<br>
-     <strong>Prix le plus bas :</strong> 51 150.25 $ (Kraken).<br>
-     <strong>Spread absolu :</strong> 69.75 $ (≈0.14 %)</p>
-  <p>*(Les prix sont mis à jour automatiquement chaque minute.)*</p>
+
+  <p id="summary"></p>
+  <p id="last-update">Dernière mise à jour : ...</p>
+
+  <script>
+    const exchanges = [
+      { name: "Binance", url: "https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT", path: "price" },
+      { name: "Coinbase", url: "https://api.exchange.coinbase.com/products/BTC-USD/ticker", path: "price" },
+      { name: "Kraken", url: "https://api.kraken.com/0/public/Ticker?pair=XXBTZUSD", path: "result.XXBTZUSD.c[0]" },
+      { name: "KuCoin", url: "https://api.kucoin.com/api/v1/market/orderbook/level1?symbol=BTC-USDT", path: "data.price" },
+      { name: "Bitfinex", url: "https://api.bitfinex.com/v1/pubticker/btcusd", path: "last_price" },
+      { name: "Bitstamp", url: "https://www.bitstamp.net/api/v2/ticker/btcusd/", path: "last" },
+      { name: "Huobi", url: "https://api.huobi.pro/market/detail/merged?symbol=btcusdt", path: "tick.close" },
+      { name: "OKX", url: "https://www.okx.com/api/v5/market/ticker?instId=BTC-USDT", path: "data[0].last" },
+      { name: "Gate.io", url: "https://api.gateio.ws/api/v4/spot/tickers?currency_pair=BTC_USDT", path: "0.last" },
+      { name: "Crypto.com", url: "https://api.crypto.com/exchange/v1/public/get-ticker?instrument_name=BTC_USDT", path: "result.data.a" }
+    ];
+
+    function getValueFromPath(obj, path) {
+      return path.split('.').reduce((o, i) => (Array.isArray(o) ? o[parseInt(i)] : o?.[i]), obj);
+    }
+
+    async function fetchPrice(exchange) {
+      try {
+        const res = await fetch(exchange.url);
+        const json = await res.json();
+        const value = getValueFromPath(json, exchange.path);
+        return { name: exchange.name, price: parseFloat(value) };
+      } catch (e) {
+        return { name: exchange.name, price: null };
+      }
+    }
+
+    async function updatePrices() {
+      const pricesTable = document.querySelector("#prices-table tbody");
+      pricesTable.innerHTML = "";
+
+      const results = await Promise.all(exchanges.map(fetchPrice));
+      const validPrices = results.filter(r => r.price);
+      const max = Math.max(...validPrices.map(r => r.price));
+      const min = Math.min(...validPrices.map(r => r.price));
+      const spread = (max - min).toFixed(2);
+      const spreadPercent = ((spread / min) * 100).toFixed(2);
+
+      for (const { name, price } of results) {
+        const row = document.createElement("tr");
+        row.innerHTML = `<td>${name}</td><td>${price ? price.toFixed(2) : "Erreur"}</td>`;
+        pricesTable.appendChild(row);
+      }
+
+      const maxEx = validPrices.find(r => r.price === max)?.name;
+      const minEx = validPrices.find(r => r.price === min)?.name;
+
+      document.getElementById("summary").innerHTML = `
+        Prix le plus haut : <strong>${max.toFixed(2)} USD (${maxEx})</strong><br>
+        Prix le plus bas : <strong>${min.toFixed(2)} USD (${minEx})</strong><br>
+        Écart (spread) : <strong>${spread} USD</strong> (${spreadPercent}%)
+      `;
+
+      document.getElementById("last-update").textContent = `Dernière mise à jour : ${new Date().toLocaleTimeString()}`;
+    }
+
+    updatePrices();
+    setInterval(updatePrices, 60000); // toutes les 60 secondes
+  </script>
 </body>
 </html>
