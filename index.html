@@ -1,94 +1,167 @@
-<!DOCTYPE html><html lang="fr"><head>
-<meta charset="UTF-8"><title>Live BTC/USDT ~ 15 Exchanges</title>
-<style>
- body{font-family:sans-serif;background:#181818;color:#fff;padding:20px;}
- table{border-collapse:collapse;width:100%;max-width:600px;}
- th,td{border:1px solid #444;padding:8px;text-align:right;}
- th{background:#282828;text-align:left;}
-</style>
-</head><body>
-<h1>Prix BTC/USDT en temps réel – 15 exchanges</h1>
-<table>
-<thead><tr><th>Exchange</th><th>Prix (USDT)</th></tr></thead>
-<tbody id="prices">
-<tr><td>Binance</td><td id="binance">…</td></tr>
-<tr><td>KuCoin</td><td id="kucoin">…</td></tr>
-<tr><td>Bitfinex</td><td id="bitfinex">…</td></tr>
-<tr><td>OKX</td><td id="okx">…</td></tr>
-<tr><td>Huobi</td><td id="huobi">…</td></tr>
-<tr><td>Gate.io</td><td id="gateio">…</td></tr>
-<tr><td>Crypto.com</td><td id="cryptocom">…</td></tr>
-<tr><td>Coinbase</td><td id="coinbase">…</td></tr>
-<tr><td>Bitstamp</td><td id="bitstamp">…</td></tr>
-<tr><td>Exmo</td><td id="exmo">…</td></tr>
-<tr><td>Gemini</td><td id="gemini">…</td></tr>
-<tr><td>Bittrex</td><td id="bittrex">…</td></tr>
-<tr><td>Poloniex</td><td id="poloniex">…</td></tr>
-<tr><td>KuCoin‑Futures</td><td id="kucoinf">…</td></tr>
-<tr><td>OKX‑Swap</td><td id="okxswap">…</td></tr>
-</tbody>
-</table>
-<p id="spread">Spread : …</p>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Comparateur Prix BTC/USDT</title>
+  <style>
+    body {
+      background: #121212;
+      color: #fff;
+      font-family: sans-serif;
+      padding: 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      border: 1px solid #444;
+      padding: 10px;
+      text-align: center;
+    }
+    th {
+      background: #222;
+    }
+    .green { color: #00ff99; }
+    .red { color: #ff6666; }
+  </style>
+</head>
+<body>
 
-<script>
-const prices = {}; function updateSpread(){
-  const arr = Object.values(prices).filter(v=>v);
-  if(arr.length>=2){
-    const max = Math.max(...arr), min = Math.min(...arr);
-    document.getElementById('spread').textContent =
-      `Spread : ${(max-min).toFixed(2)} USDT (${((max-min)/min*100).toFixed(2)} %)  ↓ haut: ${max.toFixed(2)} ← bas: ${min.toFixed(2)}`;
-  }
-}
+  <h1>Prix BTC/USDT - Multi-Exchanges</h1>
+  <p id="last-update">Dernière mise à jour : </p>
 
-// Binance
-new WebSocket("wss://stream.binance.com:9443/ws/btcusdt@ticker")
-.onmessage = e=>{
-  const d=JSON.parse(e.data); prices.binance=parseFloat(d.c);
-  document.getElementById('binance').textContent=prices.binance.toFixed(2);
-  updateSpread();
-};
+  <table>
+    <thead>
+      <tr>
+        <th>Exchange</th>
+        <th>Prix</th>
+      </tr>
+    </thead>
+    <tbody id="price-table">
+      <!-- Contenu dynamique -->
+    </tbody>
+  </table>
 
-// KuCoin
-(async()=>{
-  const tok=await fetch('https://api.kucoin.com/api/v1/bullet-public').then(r=>r.json());
-  const srv=tok.data.instanceServers[0];
-  const w=new WebSocket(`${srv.endpoint}?token=${tok.data.token}&connectId=1`);
-  w.onopen=()=>w.send(JSON.stringify({id:Date.now(),type:"subscribe",topic:"/market/ticker:BTC-USDT",response:true}));
-  w.onmessage=e=>{const m=JSON.parse(e.data); if(m.data?.price){prices.kucoin=parseFloat(m.data.price); document.getElementById('kucoin').textContent=prices.kucoin.toFixed(2); updateSpread();}}
-})();
+  <h2>Spread (Max - Min)</h2>
+  <p id="spread"></p>
 
-// Bitfinex
-new WebSocket("wss://api.bitfinex.com/ws/1").onopen=e=>e.target.send(JSON.stringify({event:"subscribe",channel:"ticker",pair:"BTCUSD"}));
-window.addEventListener('message',e=>{ try{const m=JSON.parse(e.data);
- if(Array.isArray(m) && m[1]!="hb"){prices.bitfinex=m[1][7]; document.getElementById('bitfinex').textContent=prices.bitfinex.toFixed(2); updateSpread();}}catch{}
-});
+  <script>
+    const exchanges = [
+      {
+        name: 'Binance',
+        url: 'https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT',
+        parse: res => parseFloat(res.price)
+      },
+      {
+        name: 'Coinbase',
+        url: 'https://api.coinbase.com/v2/prices/BTC-USD/spot',
+        parse: res => parseFloat(res.data.amount)
+      },
+      {
+        name: 'Bitfinex',
+        url: 'https://api-pub.bitfinex.com/v2/ticker/tBTCUSD',
+        parse: res => parseFloat(res[6])
+      },
+      {
+        name: 'Kraken',
+        url: 'https://api.kraken.com/0/public/Ticker?pair=XBTUSDT',
+        parse: res => parseFloat(Object.values(res.result)[0].c[0])
+      },
+      {
+        name: 'OKX',
+        url: 'https://www.okx.com/api/v5/market/ticker?instId=BTC-USDT',
+        parse: res => parseFloat(res.data[0].last)
+      },
+      {
+        name: 'KuCoin',
+        url: 'https://api.kucoin.com/api/v1/market/orderbook/level1?symbol=BTC-USDT',
+        parse: res => parseFloat(res.data.price)
+      },
+      {
+        name: 'Bitstamp',
+        url: 'https://www.bitstamp.net/api/v2/ticker/btcusdt/',
+        parse: res => parseFloat(res.last)
+      },
+      {
+        name: 'Gate.io',
+        url: 'https://api.gate.io/api2/1/ticker/btc_usdt',
+        parse: res => parseFloat(res.last)
+      },
+      {
+        name: 'Huobi',
+        url: 'https://api.huobi.pro/market/detail/merged?symbol=btcusdt',
+        parse: res => parseFloat(res.tick.close)
+      },
+      {
+        name: 'Crypto.com',
+        url: 'https://api.crypto.com/v2/public/get-ticker?instrument_name=BTC_USDT',
+        parse: res => parseFloat(res.result.data.a)
+      },
+      {
+        name: 'Gemini',
+        url: 'https://api.gemini.com/v1/pubticker/btcusd',
+        parse: res => parseFloat(res.last)
+      },
+      {
+        name: 'MEXC',
+        url: 'https://api.mexc.com/api/v3/ticker/price?symbol=BTCUSDT',
+        parse: res => parseFloat(res.price)
+      },
+      {
+        name: 'Bybit',
+        url: 'https://api.bybit.com/v2/public/tickers?symbol=BTCUSDT',
+        parse: res => parseFloat(res.result[0].last_price)
+      },
+      {
+        name: 'Poloniex',
+        url: 'https://api.poloniex.com/markets/BTC_USDT/price',
+        parse: res => parseFloat(res.price)
+      },
+      {
+        name: 'Phemex',
+        url: 'https://api.phemex.com/md/ticker/24hr?symbol=BTCUSDT',
+        parse: res => parseFloat(res.result.lastEp) / 10000  // Format spécial
+      }
+    ];
 
-// Autres exchanges REST toutes les secondes
-const restExchanges = {
-  okx:"https://www.okx.com/api/v5/market/ticker?instId=BTC-USDT",
-  huobi:"https://api.huobi.pro/market/detail/merged?symbol=btcusdt",
-  gateio:"https://api.gateio.ws/api/v4/spot/tickers?currency_pair=BTC_USDT",
-  cryptocom:"https://api.crypto.com/exchange/v1/public/get-ticker?instrument_name=BTC_USDT",
-  coinbase:"https://api.coinbase.com/v2/prices/BTC-USD/spot",
-  bitstamp:"https://www.bitstamp.net/api/v2/ticker/btcusd/",
-  exmo:"https://api.exmo.com/v1/ticker",
-  gemini:"https://api.gemini.com/v1/pubticker/btcusd",
-  bittrex:"https://api.bittrex.com/v3/markets/BTC-USDT/ticker",
-  poloniex:"https://poloniex.com/public?command=returnTicker",
-  kucoinf:"https://api.kucoin.com/api/v1/market/orderbook/level1?symbol=BTC-USDT",
-  okxswap:"https://www.okx.com/api/v5/market/ticker?instId=BTC-USD-SWAP"
-};
-async function poll(){
-  for(const id in restExchanges){
-    try{
-      const j=await fetch(restExchanges[id]).then(r=>r.json()), v=parseFloat(
-        j.data?.last||j.result?.price||j.last||j.last_price||j.data?.amount||Object.values(j)[0]?.last
-      );
-      if(v){ prices[id]=v; document.getElementById(id).textContent=v.toFixed(2); }
-    }catch{} 
-  }
-  updateSpread();
-}
-setInterval(poll,1000); poll();
-</script>
-</body></html>
+    async function updatePrices() {
+      const tableBody = document.getElementById('price-table');
+      tableBody.innerHTML = '';
+      const prices = [];
+
+      for (const ex of exchanges) {
+        try {
+          const res = await fetch(ex.url);
+          const data = await res.json();
+          const price = ex.parse(data);
+          prices.push({ name: ex.name, price });
+
+          const row = document.createElement('tr');
+          row.innerHTML = `<td>${ex.name}</td><td class="green">${price.toFixed(2)}</td>`;
+          tableBody.appendChild(row);
+        } catch (err) {
+          const row = document.createElement('tr');
+          row.innerHTML = `<td>${ex.name}</td><td class="red">Erreur</td>`;
+          tableBody.appendChild(row);
+        }
+      }
+
+      if (prices.length > 1) {
+        const pricesOnly = prices.map(p => p.price);
+        const spread = Math.max(...pricesOnly) - Math.min(...pricesOnly);
+        const spreadPercent = (spread / Math.min(...pricesOnly)) * 100;
+        document.getElementById('spread').textContent = `${spread.toFixed(2)} USDT (${spreadPercent.toFixed(2)}%)`;
+      }
+
+      const now = new Date().toLocaleTimeString();
+      document.getElementById('last-update').textContent = `Dernière mise à jour : ${now}`;
+    }
+
+    updatePrices();
+    setInterval(updatePrices, 60000); // Mise à jour toutes les minutes
+  </script>
+
+</body>
+</html>
