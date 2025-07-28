@@ -2,9 +2,9 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Comparateur Prix Crypto</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Comparateur Prix Crypto + News</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
   <style>
     :root {
       --bg-color: #f2f2f2;
@@ -13,7 +13,6 @@
       --th-bg: #eaeaea;
       --hover-bg: #ddd;
     }
-
     body.dark-mode {
       --bg-color: #0a0a0a;
       --text-color: #f1f1f1;
@@ -21,45 +20,35 @@
       --th-bg: #1c1c1c;
       --hover-bg: #2e2e2e;
     }
-
     body {
       margin: 0;
       font-family: 'Inter', sans-serif;
-      background: var(--bg-color) url('https://user-gen-media-assets.s3.amazonaws.com/gpt4o_images/e5dce12a-d25b-45ce-ad91-87776a695df5.png') no-repeat center center fixed;
-      background-size: cover;
+      background: var(--bg-color);
       color: var(--text-color);
       padding: 40px 20px;
       transition: background 0.3s, color 0.3s;
     }
-
     .container {
       max-width: 1200px;
       margin: auto;
     }
-
     h1 {
       text-align: center;
       font-size: 2rem;
       margin-bottom: 10px;
     }
-
     #last-update {
       text-align: center;
       color: #888;
       font-size: 0.9rem;
       margin-bottom: 20px;
     }
-
     #symbol {
       display: block;
       margin: 20px auto;
       padding: 10px;
       font-size: 1rem;
-      max-width: 200px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
     }
-
     .tradingview-widget {
       max-width: 100%;
       margin: 40px auto;
@@ -67,7 +56,6 @@
       border-radius: 10px;
       overflow: hidden;
     }
-
     .info-panel {
       display: flex;
       justify-content: space-around;
@@ -78,23 +66,17 @@
       border-radius: 10px;
       box-shadow: 0 0 20px rgba(0,0,0,0.1);
     }
-
     .info-panel div {
       font-size: 1.1rem;
       font-weight: 600;
       margin: 10px;
     }
-
     .high {
-      color: #00c853; /* vert */
-      font-weight: 700;
+      color: #00c853;
     }
-
     .low {
-      color: #d50000; /* rouge */
-      font-weight: 700;
+      color: #d50000;
     }
-
     table {
       width: 100%;
       margin: 30px 0;
@@ -104,31 +86,25 @@
       border-radius: 8px;
       overflow: hidden;
     }
-
     th, td {
       padding: 15px;
       text-align: center;
     }
-
     th {
       background: var(--th-bg);
       color: var(--text-color);
       font-weight: 600;
     }
-
     tr:hover {
       background: var(--hover-bg);
     }
-
     td.green {
       color: #00aa6c;
       font-weight: 600;
     }
-
     td.red {
       color: #d33;
     }
-
     #toggle-theme {
       position: fixed;
       top: 20px;
@@ -141,56 +117,38 @@
       cursor: pointer;
       font-weight: bold;
       transition: background 0.3s;
-      z-index: 10;
     }
-
     body:not(.dark-mode) #toggle-theme {
       background: #ddd;
       color: #111;
     }
-
-    /* Section actualités */
-    .news-section {
-      max-width: 800px;
+    #news {
+      max-width: 1200px;
       margin: 40px auto;
       background: var(--table-bg);
       border-radius: 10px;
       padding: 20px;
       box-shadow: 0 0 20px rgba(0,0,0,0.1);
-      color: var(--text-color);
     }
-
-    .news-section h2 {
+    #news h2 {
+      margin-top: 0;
       text-align: center;
-      margin-bottom: 15px;
     }
-
-    #news-list {
+    #news ul {
       list-style: none;
       padding: 0;
-      max-height: 300px;
-      overflow-y: auto;
     }
-
-    #news-list li {
+    #news li {
       margin-bottom: 15px;
       border-bottom: 1px solid #ccc;
       padding-bottom: 10px;
     }
-
-    #news-list a {
+    #news a {
+      color: #007bff;
       text-decoration: none;
-      color: #0077cc;
-      font-weight: 600;
     }
-
-    #news-list a:hover {
+    #news a:hover {
       text-decoration: underline;
-    }
-
-    #news-list small {
-      color: #666;
-      font-size: 0.85rem;
     }
   </style>
 </head>
@@ -227,14 +185,14 @@
     </table>
   </div>
 
-  <div class="news-section">
+  <div id="news">
     <h2>Actualités Crypto</h2>
-    <ul id="news-list">
-      <li>Chargement des actualités...</li>
-    </ul>
+    <ul id="news-list">Chargement des actualités...</ul>
   </div>
 
   <script>
+    const apiKey = '4bada77a3a104adc89e27656cfecb3a6';
+
     const exchanges = [
       { name: 'Binance', url: symbol => `https://api.binance.com/api/v3/ticker/price?symbol=${symbol}`, parse: res => parseFloat(res.price) },
       { name: 'Coinbase', url: symbol => `https://api.coinbase.com/v2/prices/${symbol.replace("USDT", "-USD")}/spot`, parse: res => parseFloat(res.data.amount) },
@@ -247,6 +205,7 @@
 
     const symbolSelect = document.getElementById('symbol');
     const chart = document.getElementById('chart');
+    const newsList = document.getElementById('news-list');
 
     function updateChart(symbol) {
       chart.src = `https://s.tradingview.com/widgetembed/?symbol=BINANCE:${symbol}&interval=1&theme=${document.body.classList.contains('dark-mode') ? 'dark' : 'light'}&style=1&timezone=Europe%2FParis&withdateranges=1&hideideas=1&hidevolume=1`;
@@ -307,36 +266,31 @@
       document.getElementById('last-update').textContent = `Dernière mise à jour : ${new Date().toLocaleTimeString()}`;
     }
 
-    async function fetchNews() {
-      const apiKey = "4bada77a3a104adc89e27656cfecb3a6";
-      const url = `https://newsapi.org/v2/everything?q=cryptocurrency&language=fr&sortBy=publishedAt&pageSize=5&apiKey=${apiKey}`;
+    async function updateNews() {
+      newsList.innerHTML = 'Chargement des actualités...';
 
       try {
-        // Utilisation d'un proxy CORS pour éviter les erreurs de politique CORS
-        const proxyUrl = "https://corsproxy.io/?" + encodeURIComponent(url);
-        const res = await fetch(proxyUrl);
+        const url = `https://newsapi.org/v2/everything?q=cryptocurrency&sortBy=publishedAt&pageSize=5&apiKey=${apiKey}`;
+        const res = await fetch(url);
         const data = await res.json();
 
-        if (data.status !== "ok") throw new Error("Erreur API news");
-
-        const newsList = document.getElementById("news-list");
-        newsList.innerHTML = "";
-
-        data.articles.forEach(article => {
-          const li = document.createElement("li");
-          li.innerHTML = `<a href="${article.url}" target="_blank" rel="noopener noreferrer">${article.title}</a>
-                          <br><small>${new Date(article.publishedAt).toLocaleString()} - ${article.source.name}</small>`;
-          newsList.appendChild(li);
-        });
-      } catch (e) {
-        console.error(e);
-        document.getElementById("news-list").innerHTML = "<li>Impossible de charger les actualités.</li>";
+        if (data.status === 'ok' && data.articles.length > 0) {
+          newsList.innerHTML = '';
+          for (const article of data.articles) {
+            const li = document.createElement('li');
+            li.innerHTML = `<a href="${article.url}" target="_blank" rel="noopener noreferrer">${article.title}</a><br><small>${new Date(article.publishedAt).toLocaleString()}</small>`;
+            newsList.appendChild(li);
+          }
+        } else {
+          newsList.innerHTML = 'Pas d\'actualités récentes disponibles.';
+        }
+      } catch {
+        newsList.innerHTML = 'Impossible de charger les actualités.';
       }
     }
 
     symbolSelect.addEventListener('change', () => {
-      const symbol = symbolSelect.value;
-      updateChart(symbol);
+      updateChart(symbolSelect.value);
       updatePrices();
     });
 
@@ -346,14 +300,13 @@
       updateChart(symbolSelect.value);
     });
 
-    updateChart(symbolSelect.value);
-    updatePrices();
-    fetchNews();
+    async function updateAll() {
+      await Promise.all([updatePrices(), updateNews()]);
+    }
 
-    setInterval(() => {
-      updatePrices();
-      fetchNews();
-    }, 60000);
+    updateChart(symbolSelect.value);
+    updateAll();
+    setInterval(updateAll, 60000);
   </script>
 </body>
 </html>
