@@ -136,23 +136,6 @@
     <select id="symbol">
       <option value="BTCUSDT">Bitcoin (BTC)</option>
       <option value="ETHUSDT">Ethereum (ETH)</option>
-      <option value="BNBUSDT">Binance Coin (BNB)</option>
-      <option value="XRPUSDT">XRP</option>
-      <option value="ADAUSDT">Cardano (ADA)</option>
-      <option value="SOLUSDT">Solana (SOL)</option>
-      <option value="DOGEUSDT">Dogecoin (DOGE)</option>
-      <option value="SHIBUSDT">Shiba Inu (SHIB)</option>
-      <option value="LTCUSDT">Litecoin (LTC)</option>
-      <option value="LINKUSDT">Chainlink (LINK)</option>
-      <option value="AVAXUSDT">Avalanche (AVAX)</option>
-      <option value="DOTUSDT">Polkadot (DOT)</option>
-      <option value="TRXUSDT">Tron (TRX)</option>
-      <option value="XMRUSDT">Monero (XMR)</option>
-      <option value="UNIUSDT">Uniswap (UNI)</option>
-      <option value="USDCUSDT">USD Coin (USDC)</option>
-      <option value="BCHUSDT">Bitcoin Cash (BCH)</option>
-      <option value="XLMUSDT">Stellar (XLM)</option>
-      <option value="FILUSDT">Filecoin (FIL)</option>
     </select>
 
     <div class="tradingview-widget">
@@ -176,7 +159,7 @@
     const exchanges = [
       { name: 'Binance', url: symbol => `https://api.binance.com/api/v3/ticker/price?symbol=${symbol}`, parse: res => parseFloat(res.price) },
       { name: 'Coinbase', url: symbol => `https://api.coinbase.com/v2/prices/${symbol.replace("USDT", "-USD")}/spot`, parse: res => parseFloat(res.data.amount) },
-      { name: 'Kraken', url: symbol => `https://api.kraken.com/0/public/Ticker?pair=XXBTZUSD`, parse: res => parseFloat(res.result.XXBTZUSD.c[0]), only: "BTCUSDT" },
+      { name: 'Kraken', url: symbol => `https://api.kraken.com/0/public/Ticker?pair=${symbol === 'ETHUSDT' ? 'XETHZUSD' : 'XXBTZUSD'}`, parse: res => parseFloat(symbol === 'ETHUSDT' ? res.result.XETHZUSD.c[0] : res.result.XXBTZUSD.c[0]) },
       { name: 'OKX', url: symbol => `https://www.okx.com/api/v5/market/ticker?instId=${symbol.replace("USDT", "-USDT")}`, parse: res => parseFloat(res.data[0].last) },
       { name: 'Huobi', url: symbol => `https://api.huobi.pro/market/detail/merged?symbol=${symbol.toLowerCase()}`, parse: res => parseFloat(res.tick.close) },
       { name: 'Gemini', url: symbol => `https://api.gemini.com/v1/pubticker/${symbol.replace("USDT", "usd").toLowerCase()}`, parse: res => parseFloat(res.last), only: "BTCUSDT" },
