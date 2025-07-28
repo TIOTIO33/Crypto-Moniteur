@@ -81,11 +81,12 @@
       margin: 10px;
     }
 
-    .high {
+    /* Couleurs appliquées uniquement aux mots "Plus haut" et "Plus bas" */
+    .high, #high .high {
       color: #00c853; /* vert */
     }
 
-    .low {
+    .low, #low .low {
       color: #d50000; /* rouge */
     }
 
@@ -237,9 +238,11 @@
         const spread = max - min;
         const spreadPercent = (spread / min) * 100;
 
+        // Texte "Plus haut" en vert, prix en noir (par défaut)
+        document.getElementById('high').innerHTML = `<span class="high">Plus haut</span> : ${max.toFixed(2)} USDT`;
+        // Texte "Plus bas" en rouge, prix en noir (par défaut)
+        document.getElementById('low').innerHTML = `<span class="low">Plus bas</span> : ${min.toFixed(2)} USDT`;
         document.getElementById('spread').textContent = `Spread : ${spread.toFixed(2)} USDT (${spreadPercent.toFixed(2)}%)`;
-        document.getElementById('high').innerHTML = `<span class="high">Plus haut :</span> ${max.toFixed(2)} USDT`;
-        document.getElementById('low').innerHTML = `<span class="low">Plus bas :</span> ${min.toFixed(2)} USDT`;
       } else {
         document.getElementById('spread').textContent = 'Pas assez de données pour calculer le spread.';
         document.getElementById('high').textContent = 'Plus haut : ...';
