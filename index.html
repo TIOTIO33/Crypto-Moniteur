@@ -21,7 +21,6 @@
       background-size: cover;
       color: var(--text-color);
       padding: 40px 20px 80px;
-      transition: background 0.3s, color 0.3s;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
@@ -82,13 +81,8 @@
       margin: 10px;
     }
 
-    .high {
-      color: #00c853;
-    }
-
-    .low {
-      color: #d50000;
-    }
+    .high { color: #00c853; }
+    .low { color: #d50000; }
 
     table {
       width: 100%;
@@ -115,14 +109,8 @@
       background: var(--hover-bg);
     }
 
-    td.green {
-      color: #00aa6c;
-      font-weight: 600;
-    }
-
-    td.red {
-      color: #d33;
-    }
+    td.green { color: #00aa6c; font-weight: 600; }
+    td.red { color: #d33; }
 
     h2 {
       text-align: center;
@@ -174,24 +162,67 @@
       color: #ddd;
     }
 
-    #news-list small {
-      color: #aaa;
-    }
+    #news-list small { color: #aaa; }
 
     #legal {
-      max-width: 100%;
+      width: 100%;
       text-align: center;
       font-size: 0.85rem;
       color: #888;
-      padding: 15px 20px;
-      background: rgba(0,0,0,0.5);
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      box-shadow: 0 -2px 10px rgba(0,0,0,0.8);
-      z-index: 1000;
-      font-family: 'Inter', sans-serif;
+      padding: 30px 20px 40px;
+      background: rgba(0, 0, 0, 0.6);
+      margin-top: 40px;
+      box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.8);
+      border-radius: 12px 12px 0 0;
+    }
+
+    #legal details {
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    #legal summary {
+      cursor: pointer;
+      font-weight: 600;
+      color: #66aaff;
+      font-size: 1rem;
+    }
+
+    #legal details[open] > div {
+      background: rgba(5, 5, 5, 0.95);
+      border-radius: 12px;
+      max-width: 900px;
+      margin: 20px auto;
+      padding: 25px;
+      color: #ddd;
+      line-height: 1.7;
+      text-align: left;
+      font-size: 0.95rem;
+    }
+
+    #legal h4 {
+      color: #fff;
+      margin-top: 1.2em;
+    }
+
+    #legal ul {
+      padding-left: 1.2em;
+      margin-bottom: 1em;
+    }
+
+    @media screen and (max-width: 600px) {
+      #legal details[open] > div {
+        padding: 20px 15px;
+        font-size: 0.9rem;
+      }
+
+      #legal summary {
+        font-size: 0.95rem;
+      }
+
+      #legal {
+        font-size: 0.8rem;
+      }
     }
   </style>
 </head>
@@ -217,10 +248,7 @@
 
     <table>
       <thead>
-        <tr>
-          <th>Exchange</th>
-          <th>Prix (USD)</th>
-        </tr>
+        <tr><th>Exchange</th><th>Prix (USD)</th></tr>
       </thead>
       <tbody id="price-table"></tbody>
     </table>
@@ -229,9 +257,32 @@
     <ul id="news-list"></ul>
   </div>
 
-  <p id="legal">
-    Ce site est uniquement à but informatif et ne constitue en aucun cas un conseil en investissement. Investissez de manière responsable.
-  </p>
+  <div id="legal">
+    <p>
+      Ce site est uniquement à but informatif et ne constitue en aucun cas un conseil en investissement. Investissez de manière responsable.
+    </p>
+    <details>
+      <summary>Mentions légales / CGU / Politique de confidentialité</summary>
+      <div>
+        <h4>Mentions légales</h4>
+        <p>
+          Ce site est un outil personnel de suivi des prix des cryptomonnaies. Il ne collecte aucune donnée personnelle et ne propose aucun service commercial.
+        </p>
+
+        <h4>Conditions générales d'utilisation (CGU)</h4>
+        <ul>
+          <li>Le site est fourni « tel quel » sans garantie.</li>
+          <li>Les données affichées sont issues d'API publiques de plateformes d'échange et peuvent contenir des erreurs ou des délais.</li>
+          <li>L'utilisateur reste seul responsable de l'usage qu’il fait des informations disponibles.</li>
+        </ul>
+
+        <h4>Politique de confidentialité</h4>
+        <p>
+          Ce site ne stocke aucune information personnelle, ne trace pas les utilisateurs, et n'utilise aucun cookie. Toutes les requêtes sont effectuées côté client via JavaScript.
+        </p>
+      </div>
+    </details>
+  </div>
 
   <script>
     const exchanges = [
@@ -291,7 +342,6 @@
         const min = Math.min(...values);
         const spread = max - min;
         const spreadPercent = (spread / min) * 100;
-
         document.getElementById('spread').textContent = `Spread : ${spread.toFixed(2)} USDT (${spreadPercent.toFixed(2)}%)`;
         document.getElementById('high').textContent = `Plus haut : ${max.toFixed(2)} USDT`;
         document.getElementById('low').textContent = `Plus bas : ${min.toFixed(2)} USDT`;
@@ -326,11 +376,9 @@
           li.innerHTML = `
             <img src="${imgUrl}" alt="Image article" />
             <div>
-              <a href="${article.url}" target="_blank" rel="noopener noreferrer">
-                ${article.title}
-              </a>
-              <p>${article.description ? article.description : ''}</p>
-              <small>${new Date(article.publishedAt).toLocaleString()} &nbsp;—&nbsp; ${article.source.name}</small>
+              <a href="${article.url}" target="_blank" rel="noopener noreferrer">${article.title}</a>
+              <p>${article.description || ''}</p>
+              <small>${new Date(article.publishedAt).toLocaleString()} — ${article.source.name}</small>
             </div>
           `;
           newsList.appendChild(li);
@@ -347,15 +395,10 @@
       fetchNews();
     });
 
-    // Initialisation
     updateChart(symbolSelect.value);
     updatePrices();
     fetchNews();
-
-    // Mise à jour toutes les minutes pour les prix
     setInterval(updatePrices, 60000);
-
-    // Mise à jour toutes les heures pour les news
     setInterval(fetchNews, 3600000);
   </script>
 </body>
