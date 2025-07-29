@@ -6,7 +6,7 @@
   <title>Comparateur Prix Crypto</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
 
-  <!-- Script AdSense -->
+  <!-- Script Google AdSense -->
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9671433613114123"
      crossorigin="anonymous"></script>
 
@@ -232,22 +232,21 @@
   </style>
 </head>
 <body>
+
+  <!-- BANNIÈRE ADSENSE -->
+  <div style="text-align:center; margin: 20px 0;">
+    <ins class="adsbygoogle"
+         style="display:block"
+         data-ad-client="ca-pub-9671433613114123"
+         data-ad-format="auto"
+         data-full-width-responsive="true"></ins>
+    <script>
+         (adsbygoogle = window.adsbygoogle || []).push({});
+    </script>
+  </div>
+
   <div class="container">
     <h1>Prix Crypto - Multi-Exchanges</h1>
-
-    <!-- Bannière AdSense -->
-    <div style="text-align:center; margin: 20px 0;">
-      <ins class="adsbygoogle"
-           style="display:block"
-           data-ad-client="ca-pub-9671433613114123"
-           data-ad-slot="1234567890"
-           data-ad-format="auto"
-           data-full-width-responsive="true"></ins>
-      <script>
-           (adsbygoogle = window.adsbygoogle || []).push({});
-      </script>
-    </div>
-
     <p id="last-update">Dernière mise à jour : </p>
 
     <select id="symbol" aria-label="Choisir une crypto-monnaie">
@@ -304,8 +303,100 @@
   </div>
 
   <script>
-    // Ton script JS ici (inchangé)
-    // ...
+    const exchanges = [
+      { name: 'Binance', url: symbol => `https://api.binance.com/api/v3/ticker/price?symbol=${symbol}`, parse: res => parseFloat(res.price) },
+      { name: 'Coinbase', url: symbol => `https://api.coinbase.com/v2/prices/${symbol.replace("USDT", "-USD")}/spot`, parse: res => parseFloat(res.data.amount) },
+      { name: 'Kraken', url: symbol => `https://api.kraken.com/0/public/Ticker?pair=${symbol === 'ETHUSDT' ? 'XETHZUSD' : 'XXBTZUSD'}`, parse: res => parseFloat(symbol === 'ETHUSDT' ? res.result.XETHZUSD.c[0] : res.result.XXBTZUSD.c[0]) },
+      { name: 'OKX', url: symbol => `https://www.okx.com/api/v5/market/ticker?instId=${symbol.replace("USDT", "-USDT")}`, parse: res => parseFloat(res.data[0].last) },
+      { name: 'Huobi', url: symbol => `https://api.huobi.pro/market/detail/merged?symbol=${symbol.toLowerCase()}`, parse: res => parseFloat(res.tick.close) },
+      { name: 'Gemini', url: symbol => `https://api.gemini.com/v1/pubticker/${symbol.replace("USDT", "usd").toLowerCase()}`, parse: res => parseFloat(res.last), only: "BTCUSDT" },
+      { name: 'Bitrue', url: symbol => `https://www.bitrue.com/api/v1/ticker/price?symbol=${symbol}`, parse: res => parseFloat(res.price) }
+    ];
+
+    const symbolSelect = document.getElementById('symbol');
+    const chart = document.getElementById('chart');
+
+    function updateChart(symbol) {
+      chart.src = `https://s.tradingview.com/widgetembed/?symbol=BINANCE:${symbol}&interval=1&theme=dark&style=1&timezone=Europe%2FParis&withdateranges=1&hideideas=1&hidevolume=1`;
+    }
+
+    async function updatePrices() {
+      const symbol = symbolSelect.value;
+      const tableBody = document.getElementById('price-table');
+      tableBody.innerHTML = '';
+      const priceEntries = [];
+
+      for (const ex of exchanges) {
+        try {
+          if (ex.only && ex.only !== symbol) continue;
+          const response = await fetch(ex.url(symbol));
+          const data = await response.json();
+          const price = ex.parse(data);
+          priceEntries.push({ name: ex.name, price });
+        } catch (e) {
+          priceEntries.push({ name: ex.name, price: null });
+        }
+      }
+
+      // Filtrer prix valides et calculs
+      const validPrices = priceEntries.filter(e => e.price !== null && !isNaN(e.price));
+      const high = Math.max(...validPrices.map(e => e.price));
+      const low = Math.min(...validPrices.map(e => e.price));
+      const spread = ((high - low) / low * 100).toFixed(2);
+
+      document.getElementById('high').textContent = `Plus haut : ${high.toFixed(2)} USD`;
+      document.getElementById('low').textContent = `Plus bas : ${low.toFixed(2)} USD`;
+      document.getElementById('spread').textContent = `Spread : ${spread}%`;
+
+      validPrices.forEach(({name, price}) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td>${name}</td><td>${price.toFixed(2)}</td>`;
+        tableBody.appendChild(tr);
+      });
+
+      document.getElementById('last-update').textContent = `Dernière mise à jour : ${new Date().toLocaleTimeString()}`;
+    }
+
+    async function fetchNews() {
+      // Exemple de flux RSS converti en JSON ou API de news crypto
+      const newsList = document.getElementById('news-list');
+      newsList.innerHTML = '';
+      try {
+        const res = await fetch('https://cryptopanic.com/api/v1/posts/?auth_token=demo&public=true'); 
+        // Note : remplacer par ta propre clé API ou un flux accessible
+        const data = await res.json();
+        data.results.slice(0,5).forEach(item => {
+          const li = document.createElement('li');
+          li.innerHTML = `
+            <img src="${item.image || 'https://via.placeholder.com/120x80?text=No+Image'}" alt="Image actualité" />
+            <div>
+              <a href="${item.url}" target="_blank" rel="noopener noreferrer">${item.title}</a>
+              <p>${item.domain}</p>
+              <small>${new Date(item.published_at).toLocaleDateString()}</small>
+            </div>
+          `;
+          newsList.appendChild(li);
+        });
+      } catch(e) {
+        newsList.innerHTML = '<li>Impossible de charger les actualités.</li>';
+      }
+    }
+
+    symbolSelect.addEventListener('change', () => {
+      updateChart(symbolSelect.value);
+      updatePrices();
+    });
+
+    // Initialisation
+    updateChart(symbolSelect.value);
+    updatePrices();
+    fetchNews();
+
+    // Actualisation toutes les 5 minutes
+    setInterval(() => {
+      updatePrices();
+      fetchNews();
+    }, 300000);
   </script>
 </body>
 </html>
