@@ -5,11 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Comparateur Prix Crypto</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-
-  <!-- Script Google AdSense -->
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9671433613114123"
-     crossorigin="anonymous"></script>
-
   <style>
     :root {
       --bg-color: #0a0a0a;
@@ -230,10 +225,14 @@
       }
     }
   </style>
+
+  <!-- Script AdSense -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9671433613114123"
+     crossorigin="anonymous"></script>
 </head>
 <body>
 
-  <!-- BANNIÈRE ADSENSE -->
+  <!-- Bannière AdSense responsive -->
   <div style="text-align:center; margin: 20px 0;">
     <ins class="adsbygoogle"
          style="display:block"
@@ -326,58 +325,81 @@
       tableBody.innerHTML = '';
       const priceEntries = [];
 
-      for (const ex of exchanges) {
+      for (const exchange of exchanges) {
+        if (exchange.only && exchange.only !== symbol) continue;
         try {
-          if (ex.only && ex.only !== symbol) continue;
-          const response = await fetch(ex.url(symbol));
+          const response = await fetch(exchange.url(symbol));
+          if (!response.ok) throw new Error('Erreur API');
           const data = await response.json();
-          const price = ex.parse(data);
-          priceEntries.push({ name: ex.name, price });
-        } catch (e) {
-          priceEntries.push({ name: ex.name, price: null });
+          const price = exchange.parse(data);
+          if (!price) throw new Error('Données manquantes');
+          priceEntries.push({ name: exchange.name, price });
+        } catch (err) {
+          priceEntries.push({ name: exchange.name, price: 'N/A' });
         }
       }
 
-      // Filtrer prix valides et calculs
-      const validPrices = priceEntries.filter(e => e.price !== null && !isNaN(e.price));
-      const high = Math.max(...validPrices.map(e => e.price));
-      const low = Math.min(...validPrices.map(e => e.price));
-      const spread = ((high - low) / low * 100).toFixed(2);
+      if (priceEntries.length === 0) return;
+
+      const validPrices = priceEntries.filter(p => typeof p.price === 'number' && !isNaN(p.price));
+      const high = Math.max(...validPrices.map(p => p.price));
+      const low = Math.min(...validPrices.map(p => p.price));
+      const spread = high - low;
 
       document.getElementById('high').textContent = `Plus haut : ${high.toFixed(2)} USD`;
       document.getElementById('low').textContent = `Plus bas : ${low.toFixed(2)} USD`;
-      document.getElementById('spread').textContent = `Spread : ${spread}%`;
+      document.getElementById('spread').textContent = `Spread : ${spread.toFixed(2)} USD`;
+      document.getElementById('last-update').textContent = `Dernière mise à jour : ${new Date().toLocaleTimeString()}`;
 
-      validPrices.forEach(({name, price}) => {
+      priceEntries.forEach(entry => {
         const tr = document.createElement('tr');
-        tr.innerHTML = `<td>${name}</td><td>${price.toFixed(2)}</td>`;
+        const tdName = document.createElement('td');
+        tdName.textContent = entry.name;
+        const tdPrice = document.createElement('td');
+        if (typeof entry.price === 'number') {
+          tdPrice.textContent = entry.price.toFixed(2);
+          if (entry.price === high) tdPrice.classList.add('green');
+          else if (entry.price === low) tdPrice.classList.add('red');
+        } else {
+          tdPrice.textContent = entry.price;
+          tdPrice.style.color = '#888';
+        }
+        tr.appendChild(tdName);
+        tr.appendChild(tdPrice);
         tableBody.appendChild(tr);
       });
-
-      document.getElementById('last-update').textContent = `Dernière mise à jour : ${new Date().toLocaleTimeString()}`;
     }
 
-    async function fetchNews() {
-      // Exemple de flux RSS converti en JSON ou API de news crypto
+    async function updateNews() {
       const newsList = document.getElementById('news-list');
       newsList.innerHTML = '';
       try {
-        const res = await fetch('https://cryptopanic.com/api/v1/posts/?auth_token=demo&public=true'); 
-        // Note : remplacer par ta propre clé API ou un flux accessible
-        const data = await res.json();
-        data.results.slice(0,5).forEach(item => {
+        const response = await fetch('https://cryptonews-api.com/api/v1/category?section=general&items=5&token=demo');
+        if (!response.ok) throw new Error('Erreur news');
+        const data = await response.json();
+        data.data.forEach(article => {
           const li = document.createElement('li');
-          li.innerHTML = `
-            <img src="${item.image || 'https://via.placeholder.com/120x80?text=No+Image'}" alt="Image actualité" />
-            <div>
-              <a href="${item.url}" target="_blank" rel="noopener noreferrer">${item.title}</a>
-              <p>${item.domain}</p>
-              <small>${new Date(item.published_at).toLocaleDateString()}</small>
-            </div>
-          `;
+          const img = document.createElement('img');
+          img.src = article.image_url || 'https://via.placeholder.com/120x80?text=No+Image';
+          img.alt = article.title;
+          const content = document.createElement('div');
+          const a = document.createElement('a');
+          a.href = article.news_url;
+          a.target = '_blank';
+          a.rel = 'noopener noreferrer';
+          a.textContent = article.title;
+          const p = document.createElement('p');
+          p.textContent = article.text || '';
+          const small = document.createElement('small');
+          small.textContent = new Date(article.date).toLocaleDateString();
+          content.appendChild(a);
+          content.appendChild(p);
+          content.appendChild(small);
+          li.appendChild(img);
+          li.appendChild(content);
           newsList.appendChild(li);
         });
-      } catch(e) {
+      } catch {
         newsList.innerHTML = '<li>Impossible de charger les actualités.</li>';
       }
     }
@@ -387,16 +409,10 @@
       updatePrices();
     });
 
-    // Initialisation
     updateChart(symbolSelect.value);
     updatePrices();
-    fetchNews();
-
-    // Actualisation toutes les 5 minutes
-    setInterval(() => {
-      updatePrices();
-      fetchNews();
-    }, 300000);
+    updateNews();
+    setInterval(updatePrices, 60000);
   </script>
 </body>
 </html>
